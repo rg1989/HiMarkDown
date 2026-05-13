@@ -4,6 +4,16 @@ A native macOS Markdown editor with a beautiful WYSIWYG **HTML** mode (powered b
 
 > **macOS 13 Ventura or newer • Universal binary (Apple Silicon + Intel)**
 
+## Screenshots
+
+**HTML mode** — rendered document with the outline sidebar; the highlighted row follows the section at the top of the viewport.
+
+![HiMarkDown HTML mode with outline sidebar](docs/readme/screenshot-html-mode.png)
+
+**Markdown mode** — syntax-highlighted source editing with the same outline for quick jumps.
+
+![HiMarkDown Markdown mode with outline sidebar](docs/readme/screenshot-markdown-mode.png)
+
 ---
 
 ## Why this project exists
