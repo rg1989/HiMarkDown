@@ -57,6 +57,19 @@ final class WebEditorCoordinator: NSObject, ObservableObject, WKScriptMessageHan
             // Filter Console.app with: HiMD-OUTLINE
             let p = (body["payload"] as? [String: Any]) ?? [:]
             NSLog("HiMD-OUTLINE js %@", (p as NSDictionary).description)
+        case "scrollHeading":
+            guard document?.editMode == .html else { break }
+            let p = (body["payload"] as? [String: Any]) ?? [:]
+            let raw = p["index"]
+            let idx: Int
+            if let i = raw as? Int {
+                idx = i
+            } else if let n = raw as? NSNumber {
+                idx = n.intValue
+            } else {
+                idx = -1
+            }
+            document?.setOutlineSyncedHeadingIndex(idx >= 0 ? idx : nil)
         default:
             break
         }
@@ -153,8 +166,18 @@ final class WebEditorCoordinator: NSObject, ObservableObject, WKScriptMessageHan
     func getTopVisibleHeadingIndex(_ completion: @escaping (Int?) -> Void) {
         guard let webView else { completion(nil); return }
         webView.evaluateJavaScript("window.__HiMD?.getTopVisibleHeadingIndex?.() ?? -1") { result, _ in
-            let idx = (result as? Int) ?? -1
+            let idx = (result as? Int) ?? (result as? NSNumber)?.intValue ?? -1
             DispatchQueue.main.async { completion(idx >= 0 ? idx : nil) }
+        }
+    }
+
+    /// Pushes the top-of-viewport heading into `DocumentModel.outlineSyncedHeadingIndex`
+    /// after layout (mode switch, load, etc.).
+    func refreshOutlineHeadingFromWeb() {
+        guard document?.editMode == .html else { return }
+        getTopVisibleHeadingIndex { [weak document] idx in
+            guard document?.editMode == .html else { return }
+            document?.setOutlineSyncedHeadingIndex(idx)
         }
     }
 

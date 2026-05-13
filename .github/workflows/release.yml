@@ -1,0 +1,190 @@
+name: Release
+
+# Triggered when you push a version tag, e.g.:
+#   git tag v1.0.0 && git push origin v1.0.0
+#
+# Builds HiMarkDown.app, packages a .zip and a .dmg, and publishes both
+# (plus a SHA256 manifest) as a GitHub Release with auto-generated notes.
+#
+# SIGNING:
+#   Out of the box this builds AD-HOC SIGNED artifacts (free, no Apple
+#   Developer account needed). End users will see a one-time Gatekeeper
+#   prompt and need to right-click → Open. The README documents this.
+#
+#   When you eventually get a Developer ID + notarization secrets, add
+#   the four repository secrets below and tools/release.sh will sign +
+#   notarize automatically — nothing else changes:
+#
+#     DEVELOPER_ID_APPLICATION_CERT  base64 of the .p12 cert
+#     DEVELOPER_ID_CERT_PASSWORD     password for the .p12
+#     APPLE_ID                       your Apple ID email
+#     APPLE_APP_SPECIFIC_PASSWORD    app-specific password from appleid.apple.com
+#     APPLE_TEAM_ID                  10-char team identifier
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # required to create the GitHub Release
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+          sw_vers
+
+      - name: Derive version from tag
+        id: version
+        run: |
+          # Strip the leading 'v' from refs/tags/vX.Y.Z
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            VERSION="$(date -u +%Y%m%d-%H%M%S)-dev"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Building version $VERSION"
+
+      # ── Optional signing-cert import (skipped if secrets aren't set) ────
+      - name: Import Developer ID certificate
+        if: ${{ env.HAS_SIGNING_CERT == 'true' }}
+        env:
+          HAS_SIGNING_CERT: ${{ secrets.DEVELOPER_ID_APPLICATION_CERT != '' }}
+          CERT_BASE64: ${{ secrets.DEVELOPER_ID_APPLICATION_CERT }}
+          CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+          KEYCHAIN_PWD="$(uuidgen)"
+          security create-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+          echo "$CERT_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" \
+            -k "$KEYCHAIN_PATH" \
+            -P "$CERT_PASSWORD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
+          # Find the imported identity name and export it for release.sh
+          IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" \
+            | grep 'Developer ID Application' | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')"
+          echo "DEVELOPER_ID_APPLICATION=$IDENTITY" >> "$GITHUB_ENV"
+          echo "Imported identity: $IDENTITY"
+
+      - name: Install xcbeautify (pretty xcodebuild output)
+        run: brew install xcbeautify || true
+
+      - name: Build, sign and package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          # Notarization secrets — release.sh skips notarization if any is empty.
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          ./tools/release.sh
+
+      - name: Show artifacts
+        run: ls -lh dist
+
+      - name: Read .dmg SHA256 (for the Homebrew Cask snippet in the body)
+        id: dmg
+        run: |
+          DMG_SHA="$(grep -E '\.dmg$' "dist/HiMarkDown-${{ steps.version.outputs.version }}.sha256" | awk '{print $1}' | head -n1)"
+          ZIP_SHA="$(grep -E '\.app\.zip$' "dist/HiMarkDown-${{ steps.version.outputs.version }}.sha256" | awk '{print $1}' | head -n1)"
+          echo "dmg_sha=$DMG_SHA" >> "$GITHUB_OUTPUT"
+          echo "zip_sha=$ZIP_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifacts (also attached to workflow run)
+        uses: actions/upload-artifact@v4
+        with:
+          name: HiMarkDown-${{ steps.version.outputs.version }}
+          path: dist/*
+          if-no-files-found: error
+
+      # ── Publish a GitHub Release only on real tag pushes ────────────────
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: HiMarkDown ${{ steps.version.outputs.version }}
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            dist/HiMarkDown-${{ steps.version.outputs.version }}.app.zip
+            dist/HiMarkDown-${{ steps.version.outputs.version }}.dmg
+            dist/HiMarkDown-${{ steps.version.outputs.version }}.sha256
+          body: |
+            ## Install
+
+            **macOS 13 Ventura or newer.** Pick the option that fits you.
+
+            ### Option 1 — One-line installer (no Homebrew required)
+
+            Paste in Terminal:
+
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/tools/install.sh | bash
+            ```
+
+            Downloads this release, verifies the SHA256, copies `HiMarkDown.app` to `/Applications`, and removes the macOS quarantine flag so it launches without a Gatekeeper prompt.
+
+            ### Option 2 — Manual download
+
+            1. Download `HiMarkDown-${{ steps.version.outputs.version }}.dmg` from the assets below.
+            2. Open it and drag **HiMarkDown** into your **Applications** folder.
+            3. First launch: macOS may say *"HiMarkDown can't be opened because Apple cannot check it for malicious software."* This is one-time:
+               - Open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**, or
+               - In Finder: right-click `HiMarkDown.app` → **Open** → **Open**.
+
+            Verify the download:
+
+            ```bash
+            shasum -a 256 -c HiMarkDown-${{ steps.version.outputs.version }}.sha256
+            ```
+
+            ### Why the Gatekeeper prompt?
+
+            The app is **ad-hoc signed** — the project does not yet have a paid Apple Developer ID ($99/yr). The binary itself is identical between this CI build and the file you download (verifiable via the SHA256 above). The one-line installer strips the quarantine flag for you (the same thing Homebrew Cask does for unsigned/ad-hoc casks).
+
+            ---
+
+            **For Homebrew tap maintainers** — paste this into `Casks/himarkdown.rb` of your `homebrew-himarkdown` tap:
+
+            ```ruby
+            cask "himarkdown" do
+              version "${{ steps.version.outputs.version }}"
+              sha256 "${{ steps.dmg.outputs.dmg_sha }}"
+              url "https://github.com/${{ github.repository }}/releases/download/v#{version}/HiMarkDown-#{version}.dmg"
+              name "HiMarkDown"
+              desc "Native macOS Markdown editor with HTML preview, outline and themed UI"
+              homepage "https://github.com/${{ github.repository }}"
+              livecheck { url :url; strategy :github_latest }
+              app "HiMarkDown.app"
+              zap trash: [
+                "~/Library/Containers/dev.himarkdown.HiMarkDown",
+                "~/Library/Preferences/dev.himarkdown.HiMarkDown.plist",
+              ]
+            end
+            ```

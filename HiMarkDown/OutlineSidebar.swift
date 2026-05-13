@@ -46,6 +46,7 @@ struct OutlineSidebar: View {
                                         .foregroundStyle(.primary)
                                 }
                                 .buttonStyle(.plain)
+                                .listRowBackground(outlineRowBackground(isActive: document.outlineSyncedHeadingIndex == child.index))
                             }
                         } label: {
                             Button {
@@ -57,6 +58,11 @@ struct OutlineSidebar: View {
                                     .foregroundStyle(HiAppearance.brand)
                             }
                             .buttonStyle(.plain)
+                            .listRowBackground(
+                                outlineRowBackground(
+                                    isActive: isRootOutlineRowActive(group: group, disclosureKey: key)
+                                )
+                            )
                         }
                     }
                 }
@@ -76,6 +82,26 @@ struct OutlineSidebar: View {
 
     private func outlineKey(_ h: HeadingEntry) -> String {
         "\(h.index)"
+    }
+
+    /// Root row is active when the synced heading is the root itself, or when
+    /// the synced heading is a nested child but this disclosure is collapsed
+    /// (children are hidden, so the parent should show “you are here”).
+    private func isRootOutlineRowActive(group: HeadingGroup, disclosureKey: String) -> Bool {
+        guard let synced = document.outlineSyncedHeadingIndex else { return false }
+        if synced == group.root.index { return true }
+        guard group.children.contains(where: { $0.index == synced }) else { return false }
+        let expanded = document.outlineExpanded.contains(disclosureKey)
+        return !expanded
+    }
+
+    @ViewBuilder
+    private func outlineRowBackground(isActive: Bool) -> some View {
+        if isActive {
+            HiAppearance.brand.opacity(0.18)
+        } else {
+            Color.clear
+        }
     }
 
     private func expandAllRoots() {

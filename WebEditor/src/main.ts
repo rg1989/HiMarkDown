@@ -75,18 +75,72 @@ function collectHeadings(): { index: number; level: number; text: string }[] {
   return headings;
 }
 
+/** ProseMirror positions of heading nodes, in document order (same index as `collectHeadings`). */
+function headingNodePositionsInDoc(): number[] {
+  if (!editor) return [];
+  const positions: number[] = [];
+  editor.state.doc.descendants((node, pos) => {
+    if (node.type.name === "heading") {
+      positions.push(pos);
+      return false;
+    }
+    return true;
+  });
+  return positions;
+}
+
+function domElForHeadingPos(pos: number): HTMLElement | null {
+  if (!editor) return null;
+  const d = editor.view.nodeDOM(pos);
+  if (d instanceof HTMLElement) return d;
+  if (d && (d as Node).nodeType === Node.TEXT_NODE) return (d as Text).parentElement;
+  return null;
+}
+
+function domHeadingAtOutlineIndex(index: number): HTMLElement | null {
+  const positions = headingNodePositionsInDoc();
+  if (index < 0 || index >= positions.length) return null;
+  return domElForHeadingPos(positions[index]!);
+}
+
 function assignHeadingDomIds() {
+  if (!editor) return;
   const root = document.getElementById("editor");
   if (!root) return;
-  const hs = root.querySelectorAll("h1,h2,h3,h4,h5,h6");
-  hs.forEach((h, i) => {
-    h.id = `hm-h-${i}`;
+  let i = 0;
+  editor.state.doc.descendants((node, pos) => {
+    if (node.type.name !== "heading") return true;
+    const el = domElForHeadingPos(pos);
+    if (el) {
+      el.id = `hm-h-${i}`;
+      i += 1;
+    }
+    return false;
   });
 }
 
 function notifyHeadings() {
   post("headings", collectHeadings());
   requestAnimationFrame(() => assignHeadingDomIds());
+  scheduleScrollHeadingReport();
+}
+
+let scrollHeadingRaf = 0;
+function scheduleScrollHeadingReport() {
+  if (scrollHeadingRaf !== 0) return;
+  scrollHeadingRaf = requestAnimationFrame(() => {
+    scrollHeadingRaf = 0;
+    const idx = getTopVisibleHeadingIndex();
+    post("scrollHeading", { index: idx });
+  });
+}
+
+let scrollHeadingInstalled = false;
+function installScrollHeadingReporter() {
+  if (scrollHeadingInstalled) return;
+  scrollHeadingInstalled = true;
+  window.addEventListener("scroll", scheduleScrollHeadingReport, { passive: true });
+  window.addEventListener("resize", scheduleScrollHeadingReport, { passive: true });
 }
 
 function applyTheme(json: string) {
@@ -106,10 +160,8 @@ function removeOutlineFlash() {
 }
 
 /**
- * Yellow pulse like the Markdown `showFindIndicator` flash. Must not attach
- * `hm-blink` directly to a ProseMirror heading node — the next DOM reconcile
- * strips arbitrary classes/attributes from managed nodes, so the animation
- * never appeared in WKWebView. A fixed overlay on `document.body` is immune.
+ * Premium outline-jump pulse: fixed overlay (ProseMirror strips ad-hoc DOM).
+ * Styling lives in index.html (`.hm-outline-glow` + keyframes using theme vars).
  */
 function flashHeadingHighlight(target: HTMLElement) {
   removeOutlineFlash();
@@ -121,6 +173,7 @@ function flashHeadingHighlight(target: HTMLElement) {
   const pad = 4;
   const flash = document.createElement("div");
   flash.id = "hm-outline-flash";
+  flash.className = "hm-outline-glow";
   flash.setAttribute("aria-hidden", "true");
   flash.style.position = "fixed";
   flash.style.left = `${r.left - pad}px`;
@@ -129,9 +182,6 @@ function flashHeadingHighlight(target: HTMLElement) {
   flash.style.height = `${Math.max(r.height, 12) + pad * 2}px`;
   flash.style.pointerEvents = "none";
   flash.style.zIndex = "2147483647";
-  flash.style.boxSizing = "border-box";
-  flash.style.borderRadius = "8px";
-  flash.style.animation = "hm-blink-keyframes 1.4s ease-out 1 forwards";
   document.body.appendChild(flash);
   traceOutline({
     step: "flash-appended",
@@ -139,23 +189,16 @@ function flashHeadingHighlight(target: HTMLElement) {
     top: r.top - pad,
     w: r.width + pad * 2,
     h: Math.max(r.height, 12) + pad * 2,
-    anim: flash.style.animation,
     bodyChildCount: document.body.children.length,
   });
-  window.setTimeout(removeOutlineFlash, 1600);
-}
-
-/** Re-assign ids and look up the Nth heading by stable outline index. */
-function headingElForIndex(index: number): HTMLElement | null {
-  assignHeadingDomIds();
-  const root = document.getElementById("editor");
-  return root?.querySelector(`#hm-h-${index}`) as HTMLElement | null;
+  window.setTimeout(removeOutlineFlash, 1450);
 }
 
 /** Returns a short sync summary string for Swift `evaluateJavaScript` completion. */
 function scrollToHeadingIndex(index: number, opts?: { highlight?: boolean }): string {
   const highlight = opts?.highlight !== false;
   const hi = (window as any).__HiMD;
+  assignHeadingDomIds();
   traceOutline({
     step: "enter",
     index,
@@ -165,14 +208,14 @@ function scrollToHeadingIndex(index: number, opts?: { highlight?: boolean }): st
     hasScrollToHeadingIndex: typeof hi?.scrollToHeadingIndex === "function",
     scrollY: window.scrollY,
     innerH: window.innerHeight,
-    headingCount: document.getElementById("editor")?.querySelectorAll("h1,h2,h3,h4,h5,h6").length ?? -1,
+    headingCount: headingNodePositionsInDoc().length,
   });
   const root = document.getElementById("editor");
   if (!root) {
     traceOutline({ step: "abort-no-editor-root" });
     return "no-root";
   }
-  let el = headingElForIndex(index);
+  let el = domHeadingAtOutlineIndex(index);
   if (!el) {
     traceOutline({ step: "abort-no-heading-el", index });
     return "no-el";
@@ -197,11 +240,10 @@ function scrollToHeadingIndex(index: number, opts?: { highlight?: boolean }): st
     return "ok-no-highlight";
   }
   // ProseMirror often replaces heading DOM nodes after a scroll/layout pass.
-  // Holding a stale `Element` reference yields getBoundingClientRect() = 0
-  // (detached node). Always re-resolve by id after rAF before flashing.
+  // Re-resolve by outline index after rAF before flashing.
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      let fresh = headingElForIndex(index);
+      let fresh = domHeadingAtOutlineIndex(index);
       if (!fresh) {
         traceOutline({ step: "raf2-no-el-after-remount", index });
         return;
@@ -211,7 +253,7 @@ function scrollToHeadingIndex(index: number, opts?: { highlight?: boolean }): st
         traceOutline({ step: "raf2-zero-rect-scrollIntoView", index });
         fresh.scrollIntoView({ block: "start", behavior: "auto" });
         requestAnimationFrame(() => {
-          fresh = headingElForIndex(index);
+          fresh = domHeadingAtOutlineIndex(index);
           if (!fresh) {
             traceOutline({ step: "raf3-no-el", index });
             return;
@@ -247,17 +289,16 @@ function scrollToHeadingIndex(index: number, opts?: { highlight?: boolean }): st
 /// of the current viewport. Used to keep scroll position roughly synced when
 /// the user toggles between HTML and Markdown modes.
 function getTopVisibleHeadingIndex(): number {
-  const root = document.getElementById("editor");
-  if (!root) return -1;
+  if (!editor) return -1;
   assignHeadingDomIds();
-  const hs = Array.from(root.querySelectorAll("h1,h2,h3,h4,h5,h6"));
-  if (hs.length === 0) return -1;
-  // 80px slop so a heading that is *just* above the top still counts as the
-  // anchor — matches the visual "I was reading this section" intuition.
+  const positions = headingNodePositionsInDoc();
+  if (positions.length === 0) return -1;
   const threshold = 80;
   let best = -1;
-  for (let i = 0; i < hs.length; i++) {
-    const r = hs[i].getBoundingClientRect();
+  for (let i = 0; i < positions.length; i++) {
+    const el = domElForHeadingPos(positions[i]!);
+    if (!el) continue;
+    const r = el.getBoundingClientRect();
     if (r.top <= threshold) {
       best = i;
     } else {
@@ -332,6 +373,7 @@ function initEditor() {
     },
   });
 
+  installScrollHeadingReporter();
   post("ready");
 }
 
@@ -372,6 +414,7 @@ function setMarkdown(md: string) {
     reportError("setMarkdown.notifyHeadings", err);
   }
   syncWelcomeVisibility(md);
+  requestAnimationFrame(() => scheduleScrollHeadingReport());
 }
 
 function getMarkdown(): string {

@@ -25,6 +25,9 @@ final class DocumentModel: ObservableObject {
     @Published var editMode: HiEditMode = .html
     @Published var headings: [HeadingEntry] = []
     @Published var outlineExpanded: Set<String> = []
+    /// Heading index for the section at (or nearest above) the top of the
+    /// editor viewport — updated while scrolling so the outline stays in sync.
+    @Published private(set) var outlineSyncedHeadingIndex: Int?
 
     /// Ignore next web dirty notifications while pushing from Swift.
     private var suppressWebDirty = false
@@ -191,6 +194,25 @@ final class DocumentModel: ObservableObject {
 
     func updateHeadingsFromMarkdown() {
         headings = HeadingParser.parse(markdown)
+        if headings.isEmpty {
+            outlineSyncedHeadingIndex = nil
+        } else if let cur = outlineSyncedHeadingIndex, cur >= headings.count {
+            outlineSyncedHeadingIndex = headings.count - 1
+        }
+    }
+
+    /// Updates the outline “you are here” marker without expanding/collapsing
+    /// disclosure groups (user may have folded sections on purpose).
+    func setOutlineSyncedHeadingIndex(_ index: Int?) {
+        let next: Int?
+        if let i = index, !headings.isEmpty, i >= 0, i < headings.count {
+            next = i
+        } else {
+            next = nil
+        }
+        if outlineSyncedHeadingIndex != next {
+            outlineSyncedHeadingIndex = next
+        }
     }
 
     func markDirtyFromUserSourceEdit() {
@@ -227,6 +249,7 @@ final class DocumentModel: ObservableObject {
         fileURL = nil
         isDirty = false
         outlineExpanded.removeAll()
+        outlineSyncedHeadingIndex = nil
         stopAccessingSecurityScopedResource()
         updateHeadingsFromMarkdown()
         resetUndoBaseline(to: "")
@@ -248,6 +271,7 @@ final class DocumentModel: ObservableObject {
         markdown = text
         savedMarkdown = text
         headings = parsedHeadings
+        outlineSyncedHeadingIndex = nil
         isDirty = false
         suppressWebDirty = false
         fileURL = url

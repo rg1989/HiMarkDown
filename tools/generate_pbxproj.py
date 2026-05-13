@@ -39,6 +39,8 @@ build_file_ids = {name: uid() for name in swift_files}
 
 WEB_FOLDER = uid()
 WEB_FOLDER_BF = uid()
+ASSETS = uid()
+ASSETS_BF = uid()
 
 pbx = f"""// !$*UTF8*$!
 {{
@@ -53,6 +55,7 @@ pbx = f"""// !$*UTF8*$!
 for name in swift_files:
     pbx += f"\t\t{build_file_ids[name]} /* {name} in Sources */ = {{isa = PBXBuildFile; fileRef = {file_ids[name]} /* {name} */; }};\n"
 pbx += f"\t\t{WEB_FOLDER_BF} /* Web in Resources */ = {{isa = PBXBuildFile; fileRef = {WEB_FOLDER} /* Web */; }};\n"
+pbx += f"\t\t{ASSETS_BF} /* Assets.xcassets in Resources */ = {{isa = PBXBuildFile; fileRef = {ASSETS} /* Assets.xcassets */; }};\n"
 pbx += """/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -63,6 +66,7 @@ for name in swift_files:
 pbx += f"\t\t{ENTITLEMENTS} /* HiMarkDown.entitlements */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HiMarkDown.entitlements; sourceTree = \"<group>\"; }};\n"
 pbx += f"\t\t{INFOPLIST} /* Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = \"<group>\"; }};\n"
 pbx += f"\t\t{WEB_FOLDER} /* Web */ = {{isa = PBXFileReference; lastKnownFileType = folder; path = Web; sourceTree = \"<group>\"; }};\n"
+pbx += f"\t\t{ASSETS} /* Assets.xcassets */ = {{isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = \"<group>\"; }};\n"
 pbx += """/* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -73,7 +77,7 @@ pbx += """/* End PBXFrameworksBuildPhase section */
 /* Begin PBXGroup section */
 """
 children = "\n".join([f"\t\t\t\t{file_ids[n]} /* {n} */," for n in swift_files])
-pbx += f"\t\t{GROUP} /* HiMarkDown */ = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n{children}\n\t\t\t\t{ENTITLEMENTS} /* HiMarkDown.entitlements */,\n\t\t\t\t{INFOPLIST} /* Info.plist */,\n\t\t\t\t{WEB_FOLDER} /* Web */,\n\t\t\t);\n\t\t\tpath = HiMarkDown;\n\t\t\tsourceTree = \"<group>\";\n\t\t}};\n"
+pbx += f"\t\t{GROUP} /* HiMarkDown */ = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n{children}\n\t\t\t\t{ENTITLEMENTS} /* HiMarkDown.entitlements */,\n\t\t\t\t{INFOPLIST} /* Info.plist */,\n\t\t\t\t{WEB_FOLDER} /* Web */,\n\t\t\t\t{ASSETS} /* Assets.xcassets */,\n\t\t\t);\n\t\t\tpath = HiMarkDown;\n\t\t\tsourceTree = \"<group>\";\n\t\t}};\n"
 pbx += f"\t\t{PRODUCTS} /* Products */ = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n\t\t\t\t{APP_REF} /* HiMarkDown.app */,\n\t\t\t);\n\t\t\tname = Products;\n\t\t\tsourceTree = \"<group>\";\n\t\t}};\n"
 ROOT = uid()
 pbx += f"\t\t{ROOT} = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n\t\t\t\t{GROUP} /* HiMarkDown */,\n\t\t\t\t{PRODUCTS} /* Products */,\n\t\t\t);\n\t\t\tsourceTree = \"<group>\";\n\t\t}};\n"
@@ -91,7 +95,7 @@ pbx += """/* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 """
-pbx += f"\t\t{RESOURCES} /* Resources */ = {{\n\t\t\tisa = PBXResourcesBuildPhase;\n\t\t\tbuildActionMask = 2147483647;\n\t\t\tfiles = (\n\t\t\t\t{WEB_FOLDER_BF} /* Web in Resources */,\n\t\t\t);\n\t\t\trunOnlyForDeploymentPostprocessing = 0;\n\t\t}};\n"
+pbx += f"\t\t{RESOURCES} /* Resources */ = {{\n\t\t\tisa = PBXResourcesBuildPhase;\n\t\t\tbuildActionMask = 2147483647;\n\t\t\tfiles = (\n\t\t\t\t{WEB_FOLDER_BF} /* Web in Resources */,\n\t\t\t\t{ASSETS_BF} /* Assets.xcassets in Resources */,\n\t\t\t);\n\t\t\trunOnlyForDeploymentPostprocessing = 0;\n\t\t}};\n"
 pbx += """/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -112,6 +116,7 @@ DBG_TGT = uid()
 REL_TGT = uid()
 
 common_target = f"""
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = HiMarkDown/HiMarkDown.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;

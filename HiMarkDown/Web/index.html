@@ -186,28 +186,43 @@
       background: rgba(99, 102, 241, 0.45);
       color: #fff;
     }
-    /* Match macOS NSTextView's find indicator: bright yellow flash that
-       fades over ~1.4s. Single iteration so the user sees a clean lateral
-       attention pulse rather than a stuttery loop. The heavy box-shadow
-       makes the highlight visible even when the heading itself has lots
-       of vertical margin. */
-    @keyframes hm-blink-keyframes {
+    /* Outline jump: brand-tinted border + soft multi-layer glow (fixed overlay;
+       must not attach styles to ProseMirror nodes — they get stripped on reconcile). */
+    @keyframes hm-outline-glow-keyframes {
       0% {
-        background-color: rgba(255, 230, 0, 0.85);
-        box-shadow: 0 0 0 6px rgba(255, 230, 0, 0.85);
+        opacity: 1;
+        border-color: color-mix(in srgb, var(--hi-brand) 78%, transparent);
+        box-shadow:
+          0 0 0 1px color-mix(in srgb, var(--hi-brand) 52%, transparent),
+          0 0 32px 8px color-mix(in srgb, var(--hi-brand) 40%, transparent),
+          0 0 72px 16px color-mix(in srgb, var(--hi-brand-pink) 28%, transparent),
+          inset 0 1px 0 color-mix(in srgb, var(--hi-brand) 24%, transparent);
       }
-      70% {
-        background-color: rgba(255, 230, 0, 0.35);
-        box-shadow: 0 0 0 6px rgba(255, 230, 0, 0.35);
+      50% {
+        opacity: 0.9;
+        border-color: color-mix(in srgb, var(--hi-brand) 48%, transparent);
+        box-shadow:
+          0 0 0 1px color-mix(in srgb, var(--hi-brand) 32%, transparent),
+          0 0 48px 14px color-mix(in srgb, var(--hi-brand) 26%, transparent),
+          0 0 108px 28px color-mix(in srgb, var(--hi-brand-pink) 16%, transparent),
+          inset 0 1px 0 color-mix(in srgb, var(--hi-brand) 12%, transparent);
       }
       100% {
-        background-color: transparent;
-        box-shadow: 0 0 0 0 rgba(255, 230, 0, 0);
+        opacity: 0;
+        border-color: transparent;
+        box-shadow:
+          0 0 0 0 transparent,
+          0 0 0 0 transparent,
+          0 0 0 0 transparent,
+          inset 0 0 0 transparent;
       }
     }
-    .hm-blink {
-      animation: hm-blink-keyframes 1.4s ease-out 1;
-      border-radius: 6px;
+    .hm-outline-glow {
+      box-sizing: border-box;
+      border-radius: 10px;
+      border: 1.5px solid color-mix(in srgb, var(--hi-brand) 72%, transparent);
+      background: transparent;
+      animation: hm-outline-glow-keyframes 1.32s cubic-bezier(0.2, 0.88, 0.2, 1) forwards;
     }
 
     /* ── Empty-document welcome (shown when markdown is empty) ───────── */

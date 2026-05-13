@@ -4,3 +4,16 @@ DerivedData/
 xcuserdata/
 *.xcuserstate
 WebEditor/node_modules/
+
+# Release artifacts produced by tools/release.sh and CI
+build/
+dist/
+*.xcarchive
+*.dmg
+*.zip
+*.sha256
+
+# Local sigstore for ad-hoc / Developer ID signing (do NOT commit certs)
+*.p12
+*.cer
+*.provisionprofile

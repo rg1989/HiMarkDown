@@ -70,7 +70,9 @@ struct ContentView: View {
                                 document.userEditedMarkdown(newValue)
                             }
                         ),
-                        font: NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+                        font: NSFont.monospacedSystemFont(ofSize: 13, weight: .regular),
+                        headings: document.headings,
+                        onOutlineScrollHeadingChange: { document.setOutlineSyncedHeadingIndex($0) }
                     )
                     .frame(minWidth: 200, minHeight: 200)
                     .opacity(document.editMode == .markdown ? 1 : 0)
@@ -156,7 +158,9 @@ struct ContentView: View {
             )
         }
         .onChange(of: document.fileURL) { _ in
-            webCoordinator.reloadFromDocument()
+            webCoordinator.reloadFromDocument {
+                webCoordinator.refreshOutlineHeadingFromWeb()
+            }
         }
         .onChange(of: document.markdown) { _ in
             if document.editMode == .markdown {
@@ -168,6 +172,20 @@ struct ContentView: View {
         .onChange(of: document.editMode) { newMode in
             Task { @MainActor in
                 await syncModeSwitch(to: newMode)
+                switch newMode {
+                case .html:
+                    webCoordinator.refreshOutlineHeadingFromWeb()
+                case .markdown:
+                    DispatchQueue.main.async {
+                        if let scroll = MarkdownEditorView.lastScrollView {
+                            let idx = MarkdownEditorView.topVisibleHeadingIndex(
+                                in: scroll,
+                                headings: document.headings
+                            )
+                            document.setOutlineSyncedHeadingIndex(idx)
+                        }
+                    }
+                }
             }
         }
     }
@@ -370,6 +388,7 @@ struct ContentView: View {
     }
 
     private func selectHeading(_ index: Int) {
+        document.setOutlineSyncedHeadingIndex(index)
         NSLog(
             "HiMD-OUTLINE swift selectHeading index=%d editMode=%@",
             index,
