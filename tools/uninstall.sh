@@ -6,7 +6,7 @@
 # Leaves the user's actual Markdown documents untouched.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/<owner>/<repo>/main/tools/uninstall.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/rg1989/HiMarkDown/main/tools/uninstall.sh | bash
 #   # or after a `git clone`:
 #   ./tools/uninstall.sh
 #

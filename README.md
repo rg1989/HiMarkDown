@@ -2,6 +2,8 @@
 
 A native macOS Markdown editor with a beautiful WYSIWYG **HTML** mode (powered by TipTap) and a syntax-highlighted **Markdown** source mode side by side. Outline navigation, find/replace, full undo/redo, and a themed UI that adapts to light & dark appearance.
 
+**Created and maintained by [rg1989](https://github.com/rg1989).** Source code and releases: **[github.com/rg1989/HiMarkDown](https://github.com/rg1989/HiMarkDown)**.
+
 > **macOS 13 Ventura or newer • Universal binary (Apple Silicon + Intel)**
 
 ## Screenshots
@@ -35,21 +37,23 @@ This repository is **open source** so anyone with the same itch can use it, impr
 Paste in Terminal:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<owner>/<repo>/main/tools/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/rg1989/HiMarkDown/main/tools/install.sh | bash
 ```
 
 What it does: downloads the latest release `.dmg`, verifies its SHA256, copies `HiMarkDown.app` to `/Applications`, and removes the macOS quarantine flag so the app launches without a Gatekeeper prompt. Read the script first if you'd rather audit before running — [`tools/install.sh`](tools/install.sh) is short.
 
+Forks can override the repo with `HIMD_OWNER` / `HIMD_REPO` when piping the script.
+
 To uninstall later:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<owner>/<repo>/main/tools/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/rg1989/HiMarkDown/main/tools/uninstall.sh | bash
 ```
 
 ### Option 2 — Homebrew (once a tap is published)
 
 ```bash
-brew tap <owner>/himarkdown
+brew tap rg1989/himarkdown
 brew install --cask himarkdown
 ```
 
@@ -70,8 +74,8 @@ Brew handles download, checksum verification, quarantine removal, install and un
 Requires **Xcode 15+** (Command Line Tools alone are not enough).
 
 ```bash
-git clone https://github.com/<owner>/<repo>.git
-cd <repo>
+git clone https://github.com/rg1989/HiMarkDown.git
+cd HiMarkDown
 open HiMarkDown.xcodeproj
 # Press ⌘R in Xcode to build and run.
 ```
@@ -130,10 +134,9 @@ The workflow builds, ad-hoc signs, packages a `.dmg` + `.app.zip` + a `SHA256` m
 ### Publishing the Homebrew tap (one-time setup)
 
 1. Create a public repo on your GitHub account named exactly `homebrew-himarkdown` (the `homebrew-` prefix is required by `brew tap`).
-2. Add a `Casks/` folder and copy [`tools/homebrew/himarkdown.rb`](tools/homebrew/himarkdown.rb) into it.
-3. Replace the `OWNER_PLACEHOLDER` / `REPO_PLACEHOLDER` strings with your GitHub handle and this repo's name.
-4. Cut your first release in this repo (above). The release notes will contain a copy-paste snippet with the new version + correct SHA256 — paste it into `Casks/himarkdown.rb` in the tap repo and commit.
-5. Users can now install with `brew tap <owner>/himarkdown && brew install --cask himarkdown`.
+2. Add a `Casks/` folder and copy [`tools/homebrew/himarkdown.rb`](tools/homebrew/himarkdown.rb) into it as `Casks/himarkdown.rb`. The template already points at [`rg1989/HiMarkDown`](https://github.com/rg1989/HiMarkDown); set `version` and `sha256` from the GitHub Release manifest when you publish each version.
+3. Cut your first release in this repo (above). The release notes will contain a copy-paste snippet with the new version + correct SHA256 — paste it into `Casks/himarkdown.rb` in the tap repo and commit.
+4. Users can now install with `brew tap rg1989/himarkdown && brew install --cask himarkdown`.
 
 For each subsequent release, copy the snippet from the GitHub Release notes into `Casks/himarkdown.rb` and commit. (You can automate this further with a separate workflow that opens a PR against the tap repo — happy to add that later if it becomes annoying.)
 
@@ -188,4 +191,4 @@ Issues and pull requests welcome. Before opening a PR:
 
 ## License
 
-[MIT](LICENSE) — © 2026 HiMarkDown contributors.
+[MIT](LICENSE) — © 2026 rg1989 and HiMarkDown contributors.

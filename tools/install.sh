@@ -3,10 +3,10 @@
 #
 # Usage (from anywhere):
 #
-#   curl -fsSL https://raw.githubusercontent.com/<owner>/<repo>/main/tools/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/rg1989/HiMarkDown/main/tools/install.sh | bash
 #
 # The script:
-#   1. Asks GitHub for the latest release of <owner>/<repo>
+#   1. Asks GitHub for the latest release of rg1989/HiMarkDown
 #   2. Downloads the .dmg, verifies its SHA256 against the release manifest
 #   3. Mounts the DMG, copies HiMarkDown.app to /Applications
 #   4. Removes the macOS quarantine flag so the app launches without a
@@ -22,8 +22,8 @@
 set -euo pipefail
 
 # ── Edit these two lines if you fork ─────────────────────────────────────
-GITHUB_OWNER="${HIMD_OWNER:-OWNER_PLACEHOLDER}"
-GITHUB_REPO="${HIMD_REPO:-REPO_PLACEHOLDER}"
+GITHUB_OWNER="${HIMD_OWNER:-rg1989}"
+GITHUB_REPO="${HIMD_REPO:-HiMarkDown}"
 APP_NAME="HiMarkDown"
 INSTALL_DIR="${HIMD_INSTALL_DIR:-/Applications}"
 

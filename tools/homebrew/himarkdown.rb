@@ -9,7 +9,7 @@
 #      .dmg SHA256 — paste it into `sha256` below and commit.
 #
 # Users then install with:
-#   brew tap <owner>/himarkdown
+#   brew tap rg1989/himarkdown
 #   brew install --cask himarkdown
 #
 # Brew handles: download, checksum verification, quarantine removal,
@@ -19,11 +19,11 @@ cask "himarkdown" do
   version "1.0.0"
   sha256 "REPLACE_WITH_SHA256_FROM_RELEASE_MANIFEST"
 
-  url "https://github.com/OWNER_PLACEHOLDER/REPO_PLACEHOLDER/releases/download/v#{version}/HiMarkDown-#{version}.dmg",
-      verified: "github.com/OWNER_PLACEHOLDER/REPO_PLACEHOLDER/"
+  url "https://github.com/rg1989/HiMarkDown/releases/download/v#{version}/HiMarkDown-#{version}.dmg",
+      verified: "github.com/rg1989/HiMarkDown/"
   name "HiMarkDown"
   desc "Native macOS Markdown editor with HTML preview, outline and themed UI"
-  homepage "https://github.com/OWNER_PLACEHOLDER/REPO_PLACEHOLDER"
+  homepage "https://github.com/rg1989/HiMarkDown"
 
   livecheck do
     url :url

@@ -274,6 +274,13 @@ struct SettingsView: View {
                         Text("Markdown").tag(HiEditMode.markdown)
                     }
                 }
+
+                Section {
+                    LabeledContent("Created by") {
+                        Link("rg1989", destination: HiAppearance.maintainerProfileURL)
+                    }
+                    Link("Source code on GitHub", destination: HiAppearance.projectRepositoryURL)
+                }
             }
             .formStyle(.grouped)
         }

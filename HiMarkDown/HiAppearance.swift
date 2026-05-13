@@ -2,6 +2,11 @@ import SwiftUI
 
 /// Brand colors shared with the HTML welcome hero (indigo / accent pink).
 enum HiAppearance {
+    /// Public repository (Settings credit, mirrors README / About text).
+    static let projectRepositoryURL = URL(string: "https://github.com/rg1989/HiMarkDown")!
+    /// Maintainer profile on GitHub.
+    static let maintainerProfileURL = URL(string: "https://github.com/rg1989")!
+
     static let brand = Color(red: 99 / 255, green: 102 / 255, blue: 241 / 255)
     static let brandSecondary = Color(red: 236 / 255, green: 72 / 255, blue: 153 / 255)
 

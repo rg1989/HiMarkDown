@@ -27,7 +27,7 @@
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2026 HiMarkDown contributors. MIT License.</string>
+	<string>Copyright © 2026 rg1989 and HiMarkDown contributors. MIT License. https://github.com/rg1989/HiMarkDown</string>
 	<key>NSSupportsAutomaticTermination</key>
 	<true/>
 	<key>NSSupportsSuddenTermination</key>
