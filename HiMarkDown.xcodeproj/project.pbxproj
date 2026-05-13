@@ -1,0 +1,265 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		394e597f5b96420daa682b51 /* HiMarkDownApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1c2a15e717de47dca757ec3d /* HiMarkDownApp.swift */; };
+		6eb5689df3724fe1b8d2b2fc /* DocumentModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = da7fe47a8c6241a5a96b4962 /* DocumentModel.swift */; };
+		07e8845c1a29496f8cfbbe26 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = b63f5f1b927147988b680757 /* ContentView.swift */; };
+		728c4f486341465293a35b46 /* MarkdownEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = de7bf12289e7471cacb71fc5 /* MarkdownEditorView.swift */; };
+		89b3bc8b660f4f9a84ed8ea0 /* MarkdownHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = b856e0ce2e8e4db9aee40191 /* MarkdownHighlighter.swift */; };
+		929937eff906491698bd135d /* WebEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = c8606098c5ec47b295eef644 /* WebEditorView.swift */; };
+		5a4d6a26425b403caeae9033 /* HeadingParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = f38f0bd373024b3fa5a8f214 /* HeadingParser.swift */; };
+		6ea913c9fc30471885435c12 /* SettingsAndFind.swift in Sources */ = {isa = PBXBuildFile; fileRef = c728b19dd82e4c77b276c4fb /* SettingsAndFind.swift */; };
+		f75500ec01f84a0b94d60dde /* OutlineSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = e45b3f55f1504a11b0a4d52b /* OutlineSidebar.swift */; };
+		9de420125aa84c62b93eeda5 /* HiAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 202e6f79edb44cc08c8d6152 /* HiAppearance.swift */; };
+		259f9c642338422d95baa6b4 /* Web in Resources */ = {isa = PBXBuildFile; fileRef = 20d0a41963bb479fae6af1bb /* Web */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		619d22f8ed4c49e29744efca /* HiMarkDown.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HiMarkDown.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1c2a15e717de47dca757ec3d /* HiMarkDownApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HiMarkDownApp.swift; sourceTree = "<group>"; };
+		da7fe47a8c6241a5a96b4962 /* DocumentModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentModel.swift; sourceTree = "<group>"; };
+		b63f5f1b927147988b680757 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		de7bf12289e7471cacb71fc5 /* MarkdownEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownEditorView.swift; sourceTree = "<group>"; };
+		b856e0ce2e8e4db9aee40191 /* MarkdownHighlighter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownHighlighter.swift; sourceTree = "<group>"; };
+		c8606098c5ec47b295eef644 /* WebEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebEditorView.swift; sourceTree = "<group>"; };
+		f38f0bd373024b3fa5a8f214 /* HeadingParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadingParser.swift; sourceTree = "<group>"; };
+		c728b19dd82e4c77b276c4fb /* SettingsAndFind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAndFind.swift; sourceTree = "<group>"; };
+		e45b3f55f1504a11b0a4d52b /* OutlineSidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutlineSidebar.swift; sourceTree = "<group>"; };
+		202e6f79edb44cc08c8d6152 /* HiAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HiAppearance.swift; sourceTree = "<group>"; };
+		958bdcd85a7648ea98398ddd /* HiMarkDown.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HiMarkDown.entitlements; sourceTree = "<group>"; };
+		29f56484e5e94f5e99e44a75 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		20d0a41963bb479fae6af1bb /* Web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Web; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		a75a9ac8ee0e489f97851689 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		46088759375d4953ace75f26 /* HiMarkDown */ = {
+			isa = PBXGroup;
+			children = (
+				1c2a15e717de47dca757ec3d /* HiMarkDownApp.swift */,
+				da7fe47a8c6241a5a96b4962 /* DocumentModel.swift */,
+				b63f5f1b927147988b680757 /* ContentView.swift */,
+				de7bf12289e7471cacb71fc5 /* MarkdownEditorView.swift */,
+				b856e0ce2e8e4db9aee40191 /* MarkdownHighlighter.swift */,
+				c8606098c5ec47b295eef644 /* WebEditorView.swift */,
+				f38f0bd373024b3fa5a8f214 /* HeadingParser.swift */,
+				c728b19dd82e4c77b276c4fb /* SettingsAndFind.swift */,
+				e45b3f55f1504a11b0a4d52b /* OutlineSidebar.swift */,
+				202e6f79edb44cc08c8d6152 /* HiAppearance.swift */,
+				958bdcd85a7648ea98398ddd /* HiMarkDown.entitlements */,
+				29f56484e5e94f5e99e44a75 /* Info.plist */,
+				20d0a41963bb479fae6af1bb /* Web */,
+			);
+			path = HiMarkDown;
+			sourceTree = "<group>";
+		};
+		29c84b3a33a04b53a8afba59 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				619d22f8ed4c49e29744efca /* HiMarkDown.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		db9bf1e6ae5a4deeb51a1aa0 = {
+			isa = PBXGroup;
+			children = (
+				46088759375d4953ace75f26 /* HiMarkDown */,
+				29c84b3a33a04b53a8afba59 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9419afae343448b89ce50ee4 /* HiMarkDown */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = dde7138c6d844f3db2a58923 /* Build configuration list for PBXNativeTarget "HiMarkDown" */;
+			buildPhases = (
+				87d4134722634d389496c5ab /* Sources */,
+				a75a9ac8ee0e489f97851689 /* Frameworks */,
+				b8372475c91743779b5dee07 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HiMarkDown;
+			productName = HiMarkDown;
+			productReference = 619d22f8ed4c49e29744efca /* HiMarkDown.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		63798cf89a6b4b0088799328 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {LastSwiftUpdateCheck = 1500; LastUpgradeCheck = 1500;};
+			buildConfigurationList = c161cd6d89bc4f9892f36e10 /* Build configuration list for PBXProject "HiMarkDown" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base);
+			mainGroup = db9bf1e6ae5a4deeb51a1aa0;
+			productRefGroup = 29c84b3a33a04b53a8afba59 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9419afae343448b89ce50ee4 /* HiMarkDown */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		b8372475c91743779b5dee07 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				259f9c642338422d95baa6b4 /* Web in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		87d4134722634d389496c5ab /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				394e597f5b96420daa682b51 /* HiMarkDownApp.swift in Sources */,
+				6eb5689df3724fe1b8d2b2fc /* DocumentModel.swift in Sources */,
+				07e8845c1a29496f8cfbbe26 /* ContentView.swift in Sources */,
+				728c4f486341465293a35b46 /* MarkdownEditorView.swift in Sources */,
+				89b3bc8b660f4f9a84ed8ea0 /* MarkdownHighlighter.swift in Sources */,
+				929937eff906491698bd135d /* WebEditorView.swift in Sources */,
+				5a4d6a26425b403caeae9033 /* HeadingParser.swift in Sources */,
+				6ea913c9fc30471885435c12 /* SettingsAndFind.swift in Sources */,
+				f75500ec01f84a0b94d60dde /* OutlineSidebar.swift in Sources */,
+				9de420125aa84c62b93eeda5 /* HiAppearance.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		291db3aedfc941b2a4660916 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+			};
+			name = Debug;
+		};
+		80b634cef01b43a9b9eab699 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+			};
+			name = Release;
+		};
+		c982f99706ff47d79232ae32 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HiMarkDown/HiMarkDown.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HiMarkDown/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = HiMarkDown;
+				INFOPLIST_KEY_LSApplicationCategoryType = public.app-category.productivity;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.himarkdown.HiMarkDown;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		e64eca69d877420aa0661b8d /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HiMarkDown/HiMarkDown.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HiMarkDown/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = HiMarkDown;
+				INFOPLIST_KEY_LSApplicationCategoryType = public.app-category.productivity;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.himarkdown.HiMarkDown;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		c161cd6d89bc4f9892f36e10 /* Build configuration list for PBXProject "HiMarkDown" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				291db3aedfc941b2a4660916 /* Debug */,
+				80b634cef01b43a9b9eab699 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		dde7138c6d844f3db2a58923 /* Build configuration list for PBXNativeTarget "HiMarkDown" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				c982f99706ff47d79232ae32 /* Debug */,
+				e64eca69d877420aa0661b8d /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 63798cf89a6b4b0088799328 /* Project object */;
+}

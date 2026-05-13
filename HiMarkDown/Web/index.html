@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HiMarkDown</title>
+  <style id="editor-styles">
+    :root {
+      --md-base-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
+      --md-mono-font: ui-monospace, SFMono-Regular, Menlo, monospace;
+      --md-base-size: 16px;
+      /* Themed DARK defaults — used when the WebView is in dark mode AND
+         the user hasn't saved a custom theme. Light-mode defaults below
+         override via @media. JS-injected user themes win over both. */
+      --md-page-bg: #0e0e1a;
+      --md-text: #e6e6f0;
+      --md-heading: #c7d2fe;
+      --md-link: #a5b4fc;
+      --md-code-bg: #1a1a2e;
+      --md-bq-border: #6366f1;
+      --md-max-width: 820px;
+      --hi-brand: #6366f1;
+      --hi-brand-soft: rgba(99, 102, 241, 0.35);
+      --hi-brand-pink: #ec4899;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --md-page-bg: #fafafc;
+        --md-text: #1a1a22;
+        --md-heading: #1e1b4b;
+        --md-link: #4f46e5;
+        --md-code-bg: #eef2ff;
+        --md-bq-border: #6366f1;
+        --hi-brand: #6366f1;
+        --hi-brand-soft: rgba(99, 102, 241, 0.30);
+      }
+    }
+    html {
+      /* Match the OS appearance for scrollbars / form controls. */
+      color-scheme: light dark;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      color: var(--md-text);
+      font-family: var(--md-base-font);
+      font-size: var(--md-base-size);
+    }
+    body {
+      background-color: var(--md-page-bg);
+      /* Subtle ambient wash echoing the welcome screen — kept low opacity
+         so user-picked text colors stay readable on top. */
+      background-image:
+        radial-gradient(ellipse 90% 55% at 8% 0%, rgba(99, 102, 241, 0.22), transparent 60%),
+        radial-gradient(ellipse 80% 50% at 100% 30%, rgba(236, 72, 153, 0.10), transparent 55%),
+        radial-gradient(ellipse 100% 70% at 50% 100%, rgba(56, 189, 248, 0.08), transparent 55%);
+      background-attachment: fixed;
+    }
+    @media (prefers-color-scheme: light) {
+      body {
+        background-image:
+          radial-gradient(ellipse 90% 55% at 8% 0%, rgba(99, 102, 241, 0.10), transparent 60%),
+          radial-gradient(ellipse 80% 50% at 100% 30%, rgba(236, 72, 153, 0.06), transparent 55%),
+          radial-gradient(ellipse 100% 70% at 50% 100%, rgba(56, 189, 248, 0.05), transparent 55%);
+      }
+    }
+    /* Neutral translucent thumb so the HTML scroll matches the outline /
+       markdown scrollbar regardless of light or dark page background. */
+    ::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+      background: transparent;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: rgba(160, 160, 180, 0.35);
+      background-clip: padding-box;
+      border: 3px solid transparent;
+      border-radius: 8px;
+      min-height: 24px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(160, 160, 180, 0.6);
+    }
+    ::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+    #editor-wrap {
+      box-sizing: border-box;
+      max-width: var(--md-max-width);
+      margin: 0 auto;
+      padding: 28px 28px 56px;
+      min-height: 100%;
+    }
+    .tiptap {
+      outline: none;
+    }
+    .tiptap p { line-height: 1.6; margin: 0.65em 0; }
+    .tiptap h1, .tiptap h2, .tiptap h3, .tiptap h4, .tiptap h5, .tiptap h6 {
+      color: var(--md-heading);
+      font-weight: 700;
+      line-height: 1.22;
+      letter-spacing: -0.005em;
+      margin: 1.2em 0 0.5em;
+    }
+    .tiptap h1 {
+      font-size: 2.05em;
+      letter-spacing: -0.02em;
+      padding-bottom: 0.3em;
+      border-bottom: 1px solid var(--hi-brand-soft);
+    }
+    .tiptap h2 {
+      font-size: 1.5em;
+      padding-bottom: 0.2em;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.18);
+    }
+    .tiptap h3 { font-size: 1.22em; color: var(--hi-brand); }
+    .tiptap h4 { font-size: 1.08em; color: var(--hi-brand); }
+    .tiptap a {
+      color: var(--md-link);
+      text-decoration-color: rgba(165, 180, 252, 0.45);
+      text-underline-offset: 2px;
+    }
+    .tiptap a:hover {
+      text-decoration-color: var(--md-link);
+    }
+    .tiptap strong { color: var(--md-heading); }
+    .tiptap code {
+      font-family: var(--md-mono-font);
+      background: var(--md-code-bg);
+      color: var(--md-link);
+      padding: 0.1em 0.4em;
+      border-radius: 5px;
+      font-size: 0.9em;
+      border: 1px solid rgba(99, 102, 241, 0.15);
+    }
+    .tiptap pre {
+      background: var(--md-code-bg);
+      color: var(--md-text);
+      padding: 14px 16px;
+      border-radius: 10px;
+      overflow-x: auto;
+      font-family: var(--md-mono-font);
+      font-size: 0.88em;
+      border: 1px solid rgba(99, 102, 241, 0.18);
+    }
+    .tiptap pre code {
+      background: transparent;
+      border: none;
+      padding: 0;
+      color: inherit;
+      font-size: 1em;
+    }
+    .tiptap blockquote {
+      border-left: 3px solid var(--md-bq-border);
+      margin: 0.9em 0;
+      padding: 0.4em 0 0.4em 1em;
+      color: rgba(230, 230, 240, 0.78);
+      background: linear-gradient(90deg, rgba(99, 102, 241, 0.08), transparent 70%);
+      border-radius: 0 6px 6px 0;
+    }
+    .tiptap hr {
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--hi-brand-soft), transparent);
+      margin: 1.6em 0;
+    }
+    .tiptap ul, .tiptap ol { padding-left: 1.4em; }
+    .tiptap ul li::marker { color: var(--hi-brand); }
+    .tiptap ol li::marker { color: var(--hi-brand); }
+    .tiptap table {
+      border-collapse: collapse;
+      margin: 1em 0;
+    }
+    .tiptap th, .tiptap td {
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      padding: 6px 10px;
+    }
+    .tiptap th {
+      background: rgba(99, 102, 241, 0.12);
+      color: var(--md-heading);
+    }
+    ::selection {
+      background: rgba(99, 102, 241, 0.45);
+      color: #fff;
+    }
+    /* Match macOS NSTextView's find indicator: bright yellow flash that
+       fades over ~1.4s. Single iteration so the user sees a clean lateral
+       attention pulse rather than a stuttery loop. The heavy box-shadow
+       makes the highlight visible even when the heading itself has lots
+       of vertical margin. */
+    @keyframes hm-blink-keyframes {
+      0% {
+        background-color: rgba(255, 230, 0, 0.85);
+        box-shadow: 0 0 0 6px rgba(255, 230, 0, 0.85);
+      }
+      70% {
+        background-color: rgba(255, 230, 0, 0.35);
+        box-shadow: 0 0 0 6px rgba(255, 230, 0, 0.35);
+      }
+      100% {
+        background-color: transparent;
+        box-shadow: 0 0 0 0 rgba(255, 230, 0, 0);
+      }
+    }
+    .hm-blink {
+      animation: hm-blink-keyframes 1.4s ease-out 1;
+      border-radius: 6px;
+    }
+
+    /* ── Empty-document welcome (shown when markdown is empty) ───────── */
+    #hm-welcome {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      /* Match native SwiftUI controls (toolbar, segmented picker). */
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    body.hm-welcome-visible #hm-welcome {
+      display: flex;
+    }
+    body.hm-welcome-visible #editor-wrap {
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .hm-welcome-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 120% 80% at 20% 20%, rgba(99, 102, 241, 0.45), transparent 55%),
+        radial-gradient(ellipse 100% 70% at 80% 60%, rgba(236, 72, 153, 0.35), transparent 50%),
+        radial-gradient(ellipse 90% 90% at 50% 100%, rgba(56, 189, 248, 0.25), transparent 45%),
+        linear-gradient(165deg, #0a0a12 0%, #12122a 40%, #1a1030 100%);
+    }
+    @media (prefers-color-scheme: light) {
+      .hm-welcome-bg {
+        background:
+          radial-gradient(ellipse 120% 80% at 20% 20%, rgba(99, 102, 241, 0.32), transparent 55%),
+          radial-gradient(ellipse 100% 70% at 80% 60%, rgba(236, 72, 153, 0.18), transparent 50%),
+          radial-gradient(ellipse 90% 90% at 50% 100%, rgba(56, 189, 248, 0.18), transparent 45%),
+          linear-gradient(165deg, #f5f5fb 0%, #eef2ff 40%, #fdf2f8 100%);
+      }
+    }
+    @keyframes hm-wave-shift {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .hm-welcome-waves {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 38%;
+      opacity: 0.55;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .hm-welcome-waves svg {
+      position: absolute;
+      bottom: 0;
+      width: 200%;
+      min-width: 1600px;
+      height: auto;
+      animation: hm-wave-shift 18s linear infinite;
+    }
+    .hm-welcome-card {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      font-family: inherit;
+      padding: 28px 32px 32px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.35) inset,
+        0 24px 80px rgba(0, 0, 0, 0.45);
+      max-width: 300px;
+      margin: 0 24px;
+    }
+    @media (prefers-color-scheme: light) {
+      .hm-welcome-card {
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid rgba(99, 102, 241, 0.18);
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.6) inset,
+          0 24px 60px rgba(99, 102, 241, 0.18);
+      }
+    }
+    .hm-welcome-flourish {
+      margin: 0;
+      font-size: 1.55rem;
+      line-height: 1;
+      font-weight: 400;
+      font-style: italic;
+      letter-spacing: 0.01em;
+      /* macOS ships a true script face — fall back through other handwritten
+         system faces, then a generic cursive. */
+      font-family: "Snell Roundhand", "Apple Chancery", "Zapfino", "Brush Script MT", cursive;
+      background: linear-gradient(120deg, #ffffff 0%, #c7d2fe 60%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 1px 12px rgba(165, 180, 252, 0.35);
+    }
+    @media (prefers-color-scheme: light) {
+      .hm-welcome-flourish {
+        background: linear-gradient(120deg, #4f46e5 0%, #6366f1 60%, #ec4899 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        text-shadow: 0 1px 8px rgba(99, 102, 241, 0.18);
+      }
+    }
+    .hm-welcome-title {
+      margin: 2px 0 8px;
+      font-size: 1.55rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #f4f4ff;
+    }
+    @media (prefers-color-scheme: light) {
+      .hm-welcome-title {
+        color: #1e1b4b;
+      }
+    }
+    .hm-welcome-sub {
+      margin: 0 0 28px;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      color: rgba(228, 228, 255, 0.72);
+    }
+    @media (prefers-color-scheme: light) {
+      .hm-welcome-sub {
+        color: rgba(30, 27, 75, 0.66);
+      }
+    }
+    .hm-welcome-btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      padding: 12px 28px;
+      border-radius: 999px;
+      color: #0a0a12;
+      background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 35%, #a5b4fc 100%);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.55) inset,
+        0 8px 28px rgba(99, 102, 241, 0.45);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    @media (prefers-color-scheme: light) {
+      .hm-welcome-btn {
+        color: #ffffff;
+        background: linear-gradient(135deg, #6366f1 0%, #818cf8 60%, #a78bfa 100%);
+        box-shadow:
+          0 1px 0 rgba(255, 255, 255, 0.4) inset,
+          0 8px 24px rgba(99, 102, 241, 0.35);
+      }
+    }
+    .hm-welcome-btn:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.6) inset,
+        0 12px 36px rgba(129, 140, 248, 0.55);
+    }
+    .hm-welcome-btn:active {
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div id="hm-welcome" aria-hidden="true">
+    <div class="hm-welcome-bg" aria-hidden="true"></div>
+    <div class="hm-welcome-waves" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 200" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="hmWaveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:rgba(129,140,248,0.5)"/>
+            <stop offset="50%" style="stop-color:rgba(56,189,248,0.35)"/>
+            <stop offset="100%" style="stop-color:rgba(236,72,153,0.4)"/>
+          </linearGradient>
+        </defs>
+        <path fill="url(#hmWaveGrad)" d="M0,120 C180,40 360,180 540,100 C720,20 900,160 1080,90 C1260,20 1350,100 1440,80 L1440,200 L0,200 Z"/>
+        <path fill="rgba(255,255,255,0.04)" d="M0,150 C200,80 400,200 600,130 C800,60 1000,180 1200,110 C1320,60 1400,130 1440,120 L1440,200 L0,200 Z"/>
+      </svg>
+    </div>
+    <div class="hm-welcome-card">
+      <p class="hm-welcome-flourish">Oh,</p>
+      <p class="hm-welcome-title">HiMarkDown</p>
+      <p class="hm-welcome-sub">Open a Markdown file to edit, or start typing after you open one.</p>
+      <button type="button" id="hm-open-md" class="hm-welcome-btn">Open Markdown…</button>
+    </div>
+  </div>
+  <div id="editor-wrap">
+    <div id="editor"></div>
+  </div>
+  <script src="editor.js"></script>
+</body>
+</html>
