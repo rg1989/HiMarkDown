@@ -172,20 +172,6 @@ struct ContentView: View {
         .onChange(of: document.editMode) { newMode in
             Task { @MainActor in
                 await syncModeSwitch(to: newMode)
-                switch newMode {
-                case .html:
-                    webCoordinator.refreshOutlineHeadingFromWeb()
-                case .markdown:
-                    DispatchQueue.main.async {
-                        if let scroll = MarkdownEditorView.lastScrollView {
-                            let idx = MarkdownEditorView.topVisibleHeadingIndex(
-                                in: scroll,
-                                headings: document.headings
-                            )
-                            document.setOutlineSyncedHeadingIndex(idx)
-                        }
-                    }
-                }
             }
         }
     }
@@ -221,7 +207,7 @@ struct ContentView: View {
                             // (JS round-trip); markdown is sync.
                             captureCurrentAnchor { anchor in
                                 DispatchQueue.main.async {
-                                    document.preferredAnchorHeadingIndex = anchor
+                                    document.preferredOutlineAnchor = anchor
                                     document.editMode = newValue
                                 }
                             }
@@ -332,6 +318,10 @@ struct ContentView: View {
                         if !md.isEmpty, md != document.markdown {
                             document.markdown = md
                         }
+                        // Keep `headings` in sync before we resolve the outline anchor;
+                        // assigning `markdown` alone does not always refresh headings
+                        // on the same tick as `onChange(of: markdown)`.
+                        document.updateHeadingsFromMarkdown()
                         cont.resume()
                     }
                 }
@@ -353,20 +343,34 @@ struct ContentView: View {
                     applyAnchorIfPending()
                 }
             } else {
-                // Clear the stashed anchor — the WebView already has the
-                // correct scroll position from before we left.
-                document.preferredAnchorHeadingIndex = nil
+                // WebView kept its scroll; drive the outline from the captured
+                // semantic anchor (re-querying the viewport here races layout).
+                if let anchor = document.preferredOutlineAnchor {
+                    let idx = HeadingParser.headingIndex(matching: anchor, in: document.headings)
+                    if let idx {
+                        document.setOutlineSyncedHeadingIndex(idx)
+                    } else {
+                        webCoordinator.refreshOutlineHeadingFromWeb()
+                    }
+                } else {
+                    webCoordinator.refreshOutlineHeadingFromWeb()
+                }
+                document.preferredOutlineAnchor = nil
             }
         }
     }
 
-    private func captureCurrentAnchor(_ completion: @escaping (Int?) -> Void) {
+    private func captureCurrentAnchor(_ completion: @escaping (OutlineAnchor?) -> Void) {
         switch document.editMode {
         case .html:
-            webCoordinator.getTopVisibleHeadingIndex(completion)
+            webCoordinator.getTopVisibleHeadingAnchor(completion)
         case .markdown:
-            if let scroll = MarkdownEditorView.lastScrollView {
-                completion(MarkdownEditorView.topVisibleHeadingIndex(in: scroll, headings: document.headings))
+            if let scroll = MarkdownEditorView.lastScrollView,
+               let idx = MarkdownEditorView.topVisibleHeadingIndex(in: scroll, headings: document.headings),
+               idx >= 0, idx < document.headings.count
+            {
+                let h = document.headings[idx]
+                completion(OutlineAnchor(level: h.level, rawTitle: h.title))
             } else {
                 completion(nil)
             }
@@ -375,8 +379,13 @@ struct ContentView: View {
 
     @MainActor
     private func applyAnchorIfPending() {
-        guard let idx = document.preferredAnchorHeadingIndex else { return }
-        document.preferredAnchorHeadingIndex = nil
+        guard let anchor = document.preferredOutlineAnchor else { return }
+        document.preferredOutlineAnchor = nil
+        guard let idx = HeadingParser.headingIndex(matching: anchor, in: document.headings) else {
+            document.setOutlineSyncedHeadingIndex(nil)
+            return
+        }
+        document.setOutlineSyncedHeadingIndex(idx)
         switch document.editMode {
         case .html:
             webCoordinator.scrollToHeading(index: idx, highlight: false)

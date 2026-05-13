@@ -49,11 +49,11 @@ final class DocumentModel: ObservableObject {
     /// be refreshed".
     private(set) var lastWebMarkdown: String = ""
 
-    /// Transient hint set right before a mode switch: index into `headings`
-    /// of the heading the user was viewing in the previous mode. The new
-    /// mode's editor scrolls to this on first chance and clears the hint.
-    /// Not @Published — purely a handoff between two synchronous sites.
-    var preferredAnchorHeadingIndex: Int?
+    /// Transient hint set right before a mode switch: semantic anchor for the
+    /// section the user was viewing. Indices into `headings` are unsafe across
+    /// TipTap round-trip vs source markdown; level + normalized title survives.
+    /// Not @Published — purely a handoff between capture and `applyAnchorIfPending`.
+    var preferredOutlineAnchor: OutlineAnchor?
     /// Snapshot of the markdown when the current edit burst started; used to
     /// register a single coalesced undo step instead of one per keystroke.
     private var coalesceBaseline: String?
@@ -358,6 +358,45 @@ final class DocumentModel: ObservableObject {
         markdown = text
         suppressWebDirty = false
         updateHeadingsFromMarkdown()
+    }
+
+    /// After TipTap runs `setMarkdown`, its serialized markdown can differ from
+    /// the on-disk buffer (normalization, heading levels). Pulling it into
+    /// `markdown` keeps `HeadingParser` / the outline aligned with the editor
+    /// on first HTML paint — same outcome as toggling Markdown and back.
+    /// Does not push an undo step; `recomputeDirty()` uses canonical comparison.
+    func adoptCanonicalMarkdownFromTipTap(_ text: String) {
+        guard !inUndoRedo else { return }
+        if text.isEmpty, !markdown.isEmpty { return }
+        let cNew = Self.canonical(text)
+        let cOld = Self.canonical(markdown)
+        guard cNew != cOld else {
+            lastWebMarkdown = text
+            return
+        }
+        suppressWebDirty = true
+        markdown = text
+        suppressWebDirty = false
+        updateHeadingsFromMarkdown()
+        lastWebMarkdown = text
+        pruneOutlineExpandedToBranchGroups()
+        expandAllBranchOutlineGroups()
+        recomputeDirty()
+    }
+
+    private func expandAllBranchOutlineGroups() {
+        for g in HeadingParser.outlineGroups(headings) where !g.children.isEmpty {
+            outlineExpanded.insert("\(g.root.index)")
+        }
+    }
+
+    private func pruneOutlineExpandedToBranchGroups() {
+        let validKeys = Set(
+            HeadingParser.outlineGroups(headings)
+                .filter { !$0.children.isEmpty }
+                .map { "\($0.root.index)" }
+        )
+        outlineExpanded = outlineExpanded.intersection(validKeys)
     }
 
     func setMarkdownProgrammatically(_ text: String) {

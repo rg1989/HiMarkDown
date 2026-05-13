@@ -1,5 +1,28 @@
 import Foundation
 
+/// Stable handoff for “which section was I reading?” across HTML ↔ Markdown.
+/// Integer indices into `headings` are not reliable when TipTap round-trip
+/// changes heading count or order; we match by level + normalized title instead.
+struct OutlineAnchor: Equatable {
+    let level: Int
+    /// Normalized plain-text key (see `HeadingParser.normalizedOutlineTitleKey`).
+    let titleKey: String
+
+    init(level: Int, rawTitle: String) {
+        self.level = level
+        self.titleKey = HeadingParser.normalizedOutlineTitleKey(rawTitle)
+    }
+
+    /// Parse payload from `window.__HiMD.getTopVisibleHeadingAnchor()` (WKWebView → NSDictionary).
+    init?(webPayload: [String: Any]) {
+        let lv = (webPayload["level"] as? NSNumber)?.intValue ?? webPayload["level"] as? Int
+        let text = (webPayload["text"] as? String) ?? ""
+        guard let lv, (1...6).contains(lv), !text.isEmpty else { return nil }
+        self.level = lv
+        self.titleKey = HeadingParser.normalizedOutlineTitleKey(text)
+    }
+}
+
 /// ATX heading line parsed from canonical Markdown (depth-first index matches TipTap heading order).
 struct HeadingEntry: Identifiable, Hashable {
     var id: Int { index }
@@ -9,7 +32,53 @@ struct HeadingEntry: Identifiable, Hashable {
     let line: Int
 }
 
+/// One top-level outline row plus nested headings at deeper levels (same
+/// grouping as `OutlineSidebar` and TipTap’s heading tree).
+struct HeadingOutlineGroup: Hashable {
+    let root: HeadingEntry
+    let children: [HeadingEntry]
+}
+
 enum HeadingParser {
+    /// Decode common XML entities so Markdown source (`&amp;`) lines up with
+    /// TipTap `textContent` and outline labels.
+    private static func decodeBasicEntities(_ s: String) -> String {
+        s
+            .replacingOccurrences(of: "&amp;", with: "&")
+            .replacingOccurrences(of: "&lt;", with: "<")
+            .replacingOccurrences(of: "&gt;", with: ">")
+            .replacingOccurrences(of: "&quot;", with: "\"")
+            .replacingOccurrences(of: "&#39;", with: "'")
+            .replacingOccurrences(of: "&apos;", with: "'")
+    }
+
+    /// Single comparable key for `OutlineAnchor` / cross-editor heading match.
+    static func normalizedOutlineTitleKey(_ raw: String) -> String {
+        let decoded = decodeBasicEntities(raw)
+        let norm = decoded.precomposedStringWithCanonicalMapping
+        let parts = norm.split { $0.isNewline || $0.isWhitespace }
+        return parts.joined(separator: " ").localizedLowercase
+    }
+
+    /// Map a semantic anchor onto the current flat `headings` list (after any markdown refresh).
+    static func headingIndex(matching anchor: OutlineAnchor, in headings: [HeadingEntry]) -> Int? {
+        guard !headings.isEmpty else { return nil }
+        let pairs: [(HeadingEntry, String)] = headings.map { ($0, normalizedOutlineTitleKey($0.title)) }
+        if let hit = pairs.first(where: { $0.0.level == anchor.level && $0.1 == anchor.titleKey }) {
+            return hit.0.index
+        }
+        let titleMatches = pairs.filter { $0.1 == anchor.titleKey }.map { $0.0 }
+        guard !titleMatches.isEmpty else { return nil }
+        if titleMatches.count == 1 { return titleMatches[0].index }
+        let best = titleMatches.min { a, b in
+            let da = abs(a.level - anchor.level)
+            let db = abs(b.level - anchor.level)
+            if da != db { return da < db }
+            return a.index < b.index
+        }
+        return best?.index
+    }
+
     /// Lines that look like ATX headings inside fenced code blocks are not
     /// document headings in TipTap — skipping fences keeps the outline index
     /// space aligned with the HTML editor and `scrollToHeadingIndex`.
@@ -49,6 +118,32 @@ enum HeadingParser {
             index += 1
         }
         return result
+    }
+
+    /// Groups flat `HeadingEntry` list into outline sections: each root at
+    /// the first heading’s level, with following deeper headings as children
+    /// until the next root-level heading.
+    static func outlineGroups(_ flat: [HeadingEntry]) -> [HeadingOutlineGroup] {
+        guard !flat.isEmpty else { return [] }
+        let rootLevel = flat.first?.level ?? 1
+        var groups: [HeadingOutlineGroup] = []
+        var i = 0
+        while i < flat.count {
+            let h = flat[i]
+            if h.level == rootLevel {
+                var children: [HeadingEntry] = []
+                i += 1
+                while i < flat.count, flat[i].level > rootLevel {
+                    children.append(flat[i])
+                    i += 1
+                }
+                groups.append(HeadingOutlineGroup(root: h, children: children))
+            } else {
+                groups.append(HeadingOutlineGroup(root: h, children: []))
+                i += 1
+            }
+        }
+        return groups
     }
 
     /// `trimmed` is the full line trimmed of leading/trailing ASCII whitespace.

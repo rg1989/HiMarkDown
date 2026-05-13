@@ -30,7 +30,12 @@ struct MarkdownEditorView: NSViewRepresentable {
             let idx = MarkdownEditorView.topVisibleHeadingIndex(in: scroll, headings: parent.headings)
             guard idx != lastReportedOutlineIndex else { return }
             lastReportedOutlineIndex = idx
-            parent.onOutlineScrollHeadingChange?(idx)
+            // Never publish into SwiftUI from inside an AppKit layout/update pass
+            // (reentrant NSHostingView layout). Defer to the next main runloop tick.
+            let callback = parent.onOutlineScrollHeadingChange
+            DispatchQueue.main.async {
+                callback?(idx)
+            }
         }
 
         func textDidChange(_ notification: Notification) {

@@ -308,6 +308,16 @@ function getTopVisibleHeadingIndex(): number {
   return best;
 }
 
+/** Level + plain text for native to match against `HeadingParser` after canonical markdown. */
+function getTopVisibleHeadingAnchor(): { level: number; text: string } | null {
+  const idx = getTopVisibleHeadingIndex();
+  if (!editor || idx < 0) return null;
+  const list = collectHeadings();
+  const row = list[idx];
+  if (!row) return null;
+  return { level: row.level, text: row.text };
+}
+
 function getResolvedCss(): string {
   const el = document.getElementById("editor-styles");
   return el?.textContent ?? "";
@@ -458,6 +468,7 @@ function replaceInMarkdownFirst(search: string, replacement: string) {
   applyTheme,
   scrollToHeadingIndex,
   getTopVisibleHeadingIndex,
+  getTopVisibleHeadingAnchor,
   replaceInMarkdownFirst,
   replaceInMarkdownAll,
 };

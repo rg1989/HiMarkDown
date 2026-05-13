@@ -151,12 +151,9 @@ final class HiAppDelegate: NSObject, NSApplicationDelegate {
                 let target = min(5, max(0, doc.headings.count - 1))
                 coord.scrollToHeading(index: target, highlight: false)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    coord.getTopVisibleHeadingIndex { htmlObserved in
-                        hiLog.notice("HiMD-SMOKE-SCENARIO scroll-parity html-anchor=\(htmlObserved ?? -1, privacy: .public) target=\(target, privacy: .public)")
-                        // Same handoff the toolbar Picker uses: stash
-                        // anchor on the document, flip mode, ContentView's
-                        // syncModeSwitch picks it up and scrolls.
-                        doc.preferredAnchorHeadingIndex = htmlObserved
+                    coord.getTopVisibleHeadingAnchor { anchor in
+                        hiLog.notice("HiMD-SMOKE-SCENARIO scroll-parity html-anchor semantic=\(anchor != nil, privacy: .public) target=\(target, privacy: .public)")
+                        doc.preferredOutlineAnchor = anchor
                         doc.editMode = .markdown
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                             guard let scroll = MarkdownEditorView.lastScrollView else {
@@ -165,11 +162,9 @@ final class HiAppDelegate: NSObject, NSApplicationDelegate {
                                 return
                             }
                             let md = MarkdownEditorView.topVisibleHeadingIndex(in: scroll, headings: doc.headings)
-                            // Off-by-one tolerance: the markdown editor and
-                            // the rendered HTML anchor at slightly
-                            // different points within the same section.
-                            let ok = (md ?? -1) >= max(0, target - 1) && (md ?? -1) <= target + 1
-                            hiLog.notice("HiMD-SMOKE-SCENARIO scroll-parity md-anchor=\(md ?? -1, privacy: .public) target=\(target, privacy: .public) parityOK=\(ok, privacy: .public)")
+                            let expected = anchor.flatMap { HeadingParser.headingIndex(matching: $0, in: doc.headings) }
+                            let ok = md == expected
+                            hiLog.notice("HiMD-SMOKE-SCENARIO scroll-parity md-anchor=\(md ?? -1, privacy: .public) expected=\(expected ?? -1, privacy: .public) parityOK=\(ok, privacy: .public)")
                             next()
                         }
                     }

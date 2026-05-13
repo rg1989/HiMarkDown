@@ -69,7 +69,11 @@ final class WebEditorCoordinator: NSObject, ObservableObject, WKScriptMessageHan
             } else {
                 idx = -1
             }
-            document?.setOutlineSyncedHeadingIndex(idx >= 0 ? idx : nil)
+            let next = idx >= 0 ? idx : nil
+            Task { @MainActor [weak document] in
+                guard document?.editMode == .html else { return }
+                document?.setOutlineSyncedHeadingIndex(next)
+            }
         default:
             break
         }
@@ -90,10 +94,22 @@ final class WebEditorCoordinator: NSObject, ObservableObject, WKScriptMessageHan
         document.noteMarkdownPushedToWeb()
         let md = document.markdown.jsEscaped
         webView.evaluateJavaScript("window.__HiMD?.setMarkdown(\"\(md)\")") { _, _ in
-            // setMarkdown finished evaluating; the editor has the new content
-            // and `notifyHeadings` has fired. Hop back to the main actor for
-            // any post-load work (e.g. anchor restore on mode switch).
-            DispatchQueue.main.async { completion?() }
+            DispatchQueue.main.async { [weak self] in
+                self?.syncTipTapMarkdownIntoDocumentThen(completion: completion)
+            }
+        }
+    }
+
+    private func syncTipTapMarkdownIntoDocumentThen(completion: (() -> Void)?) {
+        guard let document = document else {
+            completion?()
+            return
+        }
+        getMarkdown { md in
+            Task { @MainActor in
+                document.adoptCanonicalMarkdownFromTipTap(md)
+                completion?()
+            }
         }
     }
 
@@ -171,13 +187,38 @@ final class WebEditorCoordinator: NSObject, ObservableObject, WKScriptMessageHan
         }
     }
 
+    /// Semantic anchor at the top of the HTML viewport (level + plain text).
+    /// Prefer this over `getTopVisibleHeadingIndex` when handing off to Markdown.
+    func getTopVisibleHeadingAnchor(_ completion: @escaping (OutlineAnchor?) -> Void) {
+        guard let webView else { completion(nil); return }
+        webView.evaluateJavaScript("window.__HiMD?.getTopVisibleHeadingAnchor?.() ?? null") { result, _ in
+            DispatchQueue.main.async {
+                if let dict = result as? [String: Any], let anchor = OutlineAnchor(webPayload: dict) {
+                    completion(anchor)
+                    return
+                }
+                if let anyDict = result as? [AnyHashable: Any] {
+                    var stringKeyed: [String: Any] = [:]
+                    for (k, v) in anyDict {
+                        if let ks = k as? String { stringKeyed[ks] = v }
+                    }
+                    completion(OutlineAnchor(webPayload: stringKeyed))
+                    return
+                }
+                completion(nil)
+            }
+        }
+    }
+
     /// Pushes the top-of-viewport heading into `DocumentModel.outlineSyncedHeadingIndex`
     /// after layout (mode switch, load, etc.).
     func refreshOutlineHeadingFromWeb() {
         guard document?.editMode == .html else { return }
         getTopVisibleHeadingIndex { [weak document] idx in
-            guard document?.editMode == .html else { return }
-            document?.setOutlineSyncedHeadingIndex(idx)
+            Task { @MainActor in
+                guard document?.editMode == .html else { return }
+                document?.setOutlineSyncedHeadingIndex(idx)
+            }
         }
     }
 
