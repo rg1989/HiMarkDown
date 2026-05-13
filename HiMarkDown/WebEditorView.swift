@@ -107,7 +107,9 @@ final class WebEditorCoordinator: NSObject, ObservableObject, WKScriptMessageHan
         }
         getMarkdown { md in
             Task { @MainActor in
+                let wasCleanBeforeAdopt = !document.isDirty
                 document.adoptCanonicalMarkdownFromTipTap(md)
+                document.rebaselineSavedMarkdownAfterTipTapSyncIfDocumentWasClean(beforeAdopt: wasCleanBeforeAdopt)
                 completion?()
             }
         }

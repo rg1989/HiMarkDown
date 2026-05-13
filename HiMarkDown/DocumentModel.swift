@@ -396,6 +396,17 @@ final class DocumentModel: ObservableObject {
         recomputeDirty()
     }
 
+    /// After `adoptCanonicalMarkdownFromTipTap`, TipTap's serializer may differ
+    /// from the file bytes even when the user made no edits (e.g. Mermaid code
+    /// fences / attrs). If the document was clean immediately before that
+    /// adoption, treat the adopted buffer as the save baseline so we do not
+    /// prompt to save normalization-only drift.
+    func rebaselineSavedMarkdownAfterTipTapSyncIfDocumentWasClean(beforeAdopt wasClean: Bool) {
+        guard wasClean else { return }
+        savedMarkdown = markdown
+        recomputeDirty()
+    }
+
     private func expandAllBranchOutlineGroups() {
         for g in HeadingParser.outlineGroups(headings) where !g.children.isEmpty {
             outlineExpanded.insert("\(g.root.index)")
