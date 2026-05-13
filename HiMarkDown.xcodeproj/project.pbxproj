@@ -89,11 +89,39 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		e7a81c2f4b3d4e5f8065a4b3c /* Build WebEditor bundle */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/WebEditor/package.json",
+				"$(SRCROOT)/WebEditor/package-lock.json",
+				"$(SRCROOT)/WebEditor/src/main.ts",
+				"$(SRCROOT)/WebEditor/src/mermaidCodeBlock.ts",
+			);
+			name = "Build WebEditor bundle";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/HiMarkDown/Web/editor.js",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nexport PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\"\nif ! command -v npm >/dev/null 2>&1; then\n  echo \"error: npm not on PATH. Install Node.js, then: cd WebEditor && npm install && npm run build\" >&2\n  exit 1\nfi\ncd \"$SRCROOT/WebEditor\"\nif [ ! -d node_modules ]; then\n  npm install\nfi\nnpm run build\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXNativeTarget section */
 		0a5bbda1581b4fc7a9e95fad /* HiMarkDown */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = c329bef96fea4f07bd9355c2 /* Build configuration list for PBXNativeTarget "HiMarkDown" */;
 			buildPhases = (
+				e7a81c2f4b3d4e5f8065a4b3c /* Build WebEditor bundle */,
 				b3a11a89f03e4bb08aa02321 /* Sources */,
 				d9337efd154344b2b6894ca1 /* Frameworks */,
 				f64bdc5e43424dbc9e4d7bea /* Resources */,

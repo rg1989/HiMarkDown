@@ -345,6 +345,18 @@ final class DocumentModel: ObservableObject {
             applyMarkdownFromWeb(text)
             return
         }
+        // TipTap can emit "dirty" after focus/selection churn; the serialized
+        // markdown may differ only by whitespace. Syncing that into Swift
+        // still publishes `markdown` and can destabilize the HTML WKWebView.
+        if Self.canonical(text) == Self.canonical(markdown) {
+            lastWebMarkdown = text
+            if text != markdown {
+                suppressWebDirty = true
+                markdown = text
+                suppressWebDirty = false
+            }
+            return
+        }
         if text != markdown {
             recordEdit(newMarkdown: text)
         }

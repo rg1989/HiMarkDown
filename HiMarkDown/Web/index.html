@@ -153,6 +153,114 @@
       color: inherit;
       font-size: 1em;
     }
+    /* Mermaid: chart preview + edit toggle (custom code-block node view) */
+    .hm-codeblock-wrap.hm-mermaid-active {
+      margin: 0.9em 0;
+      border-radius: 12px;
+      border: 1px solid rgba(99, 102, 241, 0.22);
+      /* Must not clip tall diagrams — window scroll should reveal the rest. */
+      overflow: visible;
+      background: var(--md-code-bg);
+    }
+    .hm-codeblock-wrap .hm-mermaid-toolbar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+      background: rgba(99, 102, 241, 0.06);
+    }
+    .hm-codeblock-wrap .hm-mermaid-toolbar[hidden] {
+      display: none !important;
+    }
+    .hm-mermaid-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      background: rgba(99, 102, 241, 0.08);
+      color: var(--md-link);
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .hm-mermaid-toggle:hover {
+      background: rgba(99, 102, 241, 0.18);
+      border-color: rgba(99, 102, 241, 0.45);
+    }
+    .hm-mermaid-preview {
+      position: relative;
+      z-index: 0;
+      padding: 12px 14px 16px;
+      overflow-x: auto;
+      touch-action: pan-x pan-y;
+    }
+    .hm-mermaid-chart-host {
+      touch-action: pan-x pan-y;
+    }
+    .hm-mermaid-source-hidden {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0);
+      clip-path: inset(50%);
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+    .hm-mermaid-preview[hidden] {
+      display: none !important;
+    }
+    .hm-mermaid-chart-host svg {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    .hm-mermaid-error {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.88em;
+      font-family: var(--md-mono-font);
+      color: #fecaca;
+      background: rgba(220, 38, 38, 0.15);
+      border: 1px solid rgba(220, 38, 38, 0.35);
+    }
+    @media (prefers-color-scheme: light) {
+      .hm-mermaid-error {
+        color: #991b1b;
+        background: rgba(248, 113, 113, 0.15);
+        border-color: rgba(220, 38, 38, 0.25);
+      }
+    }
+    .hm-mermaid-empty,
+    .hm-mermaid-loading {
+      margin: 0;
+      font-size: 0.9em;
+      color: rgba(230, 230, 240, 0.65);
+    }
+    @media (prefers-color-scheme: light) {
+      .hm-mermaid-empty,
+      .hm-mermaid-loading {
+        color: rgba(30, 27, 75, 0.55);
+      }
+    }
+    .hm-codeblock-wrap > pre {
+      margin: 0;
+      border-radius: 0;
+    }
+    .hm-codeblock-wrap:not(.hm-mermaid-active) {
+      margin: 0.65em 0;
+    }
+    .hm-codeblock-wrap:not(.hm-mermaid-active) > pre {
+      border-radius: 10px;
+    }
     .tiptap blockquote {
       border-left: 3px solid var(--md-bq-border);
       margin: 0.9em 0;
@@ -421,6 +529,7 @@
   <div id="editor-wrap">
     <div id="editor"></div>
   </div>
-  <script src="editor.js"></script>
+  <!-- Bump ?v= when the web bundle changes so WKWebView does not keep an old editor.js. -->
+  <script src="editor.js?v=hm-20260214-8"></script>
 </body>
 </html>

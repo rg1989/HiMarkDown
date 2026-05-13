@@ -1,10 +1,16 @@
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "@tiptap/markdown";
+import { HiCodeBlock } from "./mermaidCodeBlock";
 
 type NativePayload = { type?: string; payload?: unknown };
 
 let editor: Editor | null = null;
+
+/** Last markdown we told native about; suppresses spurious `dirty` when PM docChanged but serialization is unchanged. */
+let lastSerializedMarkdown: string | null = null;
+/** True while Swift is pushing markdown into the editor (avoid echo `dirty`). */
+let suppressDirtyEcho = false;
 
 function native() {
   return (window as any).webkit?.messageHandlers?.native;
@@ -103,34 +109,21 @@ function domHeadingAtOutlineIndex(index: number): HTMLElement | null {
   return domElForHeadingPos(positions[index]!);
 }
 
-function assignHeadingDomIds() {
-  if (!editor) return;
-  const root = document.getElementById("editor");
-  if (!root) return;
-  let i = 0;
-  editor.state.doc.descendants((node, pos) => {
-    if (node.type.name !== "heading") return true;
-    const el = domElForHeadingPos(pos);
-    if (el) {
-      el.id = `hm-h-${i}`;
-      i += 1;
-    }
-    return false;
-  });
-}
-
 function notifyHeadings() {
   post("headings", collectHeadings());
-  requestAnimationFrame(() => assignHeadingDomIds());
   scheduleScrollHeadingReport();
 }
 
 let scrollHeadingRaf = 0;
+/** Last outline index posted to native; avoids hammering SwiftUI on every scroll tick. */
+let lastPostedScrollHeadingIndex = -9999;
 function scheduleScrollHeadingReport() {
   if (scrollHeadingRaf !== 0) return;
   scrollHeadingRaf = requestAnimationFrame(() => {
     scrollHeadingRaf = 0;
     const idx = getTopVisibleHeadingIndex();
+    if (idx === lastPostedScrollHeadingIndex) return;
+    lastPostedScrollHeadingIndex = idx;
     post("scrollHeading", { index: idx });
   });
 }
@@ -198,7 +191,6 @@ function flashHeadingHighlight(target: HTMLElement) {
 function scrollToHeadingIndex(index: number, opts?: { highlight?: boolean }): string {
   const highlight = opts?.highlight !== false;
   const hi = (window as any).__HiMD;
-  assignHeadingDomIds();
   traceOutline({
     step: "enter",
     index,
@@ -290,7 +282,6 @@ function scrollToHeadingIndex(index: number, opts?: { highlight?: boolean }): st
 /// the user toggles between HTML and Markdown modes.
 function getTopVisibleHeadingIndex(): number {
   if (!editor) return -1;
-  assignHeadingDomIds();
   const positions = headingNodePositionsInDoc();
   if (positions.length === 0) return -1;
   const threshold = 80;
@@ -364,7 +355,11 @@ function initEditor() {
     // Swift's document-level UndoManager so that an HTML-mode edit and a
     // Markdown-mode edit live on the same stack. Cmd-Z is intercepted in the
     // keydown listener below and forwarded to native.
-    extensions: [StarterKit.configure({ history: false } as any), Markdown],
+    extensions: [
+      StarterKit.configure({ history: false, codeBlock: false } as any),
+      Markdown,
+      HiCodeBlock,
+    ],
     content: "",
     contentType: "markdown",
     autofocus: false,
@@ -374,11 +369,20 @@ function initEditor() {
         spellcheck: "false",
       },
     },
-    onUpdate() {
+    onUpdate({ transaction }) {
+      if (suppressDirtyEcho) return;
+      // Selection-only: no native sync.
+      if (!transaction.docChanged) return;
+      // ProseMirror can report docChanged after benign DOM work; only notify
+      // native when serialized markdown actually changed.
+      const md = editor!.getMarkdown();
+      if (md === lastSerializedMarkdown) return;
+      lastSerializedMarkdown = md;
       post("dirty");
       notifyHeadings();
     },
     onCreate() {
+      lastSerializedMarkdown = editor?.getMarkdown() ?? "";
       notifyHeadings();
     },
   });
@@ -409,7 +413,14 @@ function setMarkdown(md: string) {
   try {
     initEditor();
     if (!editor) return;
-    editor.commands.setContent(md, { contentType: "markdown" });
+    suppressDirtyEcho = true;
+    try {
+      editor.commands.setContent(md, { contentType: "markdown" });
+    } finally {
+      lastSerializedMarkdown = editor.getMarkdown();
+      suppressDirtyEcho = false;
+    }
+    lastPostedScrollHeadingIndex = -9999;
   } catch (err) {
     reportError("setMarkdown.setContent", err);
     return;
@@ -418,7 +429,6 @@ function setMarkdown(md: string) {
   // owned by Swift's document UndoManager, so there's no per-WebView undo
   // stack that could cross a file-load boundary. Nothing to clear here.
   try {
-    assignHeadingDomIds();
     notifyHeadings();
   } catch (err) {
     reportError("setMarkdown.notifyHeadings", err);
@@ -444,8 +454,6 @@ function replaceInMarkdownAll(search: string, replacement: string) {
   const md = editor.getMarkdown();
   const next = md.split(search).join(replacement);
   editor.commands.setContent(next, { contentType: "markdown" });
-  post("dirty");
-  notifyHeadings();
 }
 
 function replaceInMarkdownFirst(search: string, replacement: string) {
@@ -455,8 +463,6 @@ function replaceInMarkdownFirst(search: string, replacement: string) {
   if (idx < 0) return;
   const next = md.slice(0, idx) + replacement + md.slice(idx + search.length);
   editor.commands.setContent(next, { contentType: "markdown" });
-  post("dirty");
-  notifyHeadings();
 }
 
 (window as any).__HiMD = {

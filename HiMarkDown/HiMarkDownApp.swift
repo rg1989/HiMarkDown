@@ -137,6 +137,66 @@ final class HiAppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
 
+        case "mermaid-toggle":
+            guard let coord = WebEditorCoordinator.shared else {
+                hiLog.notice("HiMD-SMOKE-SCENARIO mermaid-toggle no-coordinator")
+                next()
+                return
+            }
+            doc.setMarkdownProgrammatically(
+                """
+                # Mermaid smoke
+
+                ```mermaid
+                graph TD
+                  A --> B
+                ```
+                """
+            )
+            doc.editMode = .html
+            coord.reloadFromDocument {
+                guard let wv = coord.webView else {
+                    hiLog.notice("HiMD-SMOKE-SCENARIO mermaid-toggle no-webview-after-reload")
+                    next()
+                    return
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                    let js = #"""
+                    (function() {
+                      var svg = document.querySelector('.hm-mermaid-chart-host svg');
+                      var btn = document.querySelector('.hm-mermaid-toggle');
+                      var prev = document.querySelector('.hm-mermaid-preview');
+                      if (!svg) return { ok: false, step: 'no-svg' };
+                      if (!btn) return { ok: false, step: 'no-btn' };
+                      if (!prev) return { ok: false, step: 'no-preview' };
+                      var beforeHidden = prev.hidden;
+                      btn.click();
+                      var afterHidden = prev.hidden;
+                      var aria = btn.getAttribute('aria-label');
+                      var pre = document.querySelector('.hm-codeblock-wrap.hm-mermaid-active pre');
+                      var sourceHidden = pre ? pre.classList.contains('hm-mermaid-source-hidden') : null;
+                      var ok = !!afterHidden && aria === 'Show diagram' && sourceHidden === false;
+                      return { ok: ok, beforeHidden: beforeHidden, afterHidden: afterHidden, aria: aria, sourceHidden: sourceHidden };
+                    })();
+                    """#
+                    wv.evaluateJavaScript(js) { result, err in
+                        if let err {
+                            hiLog.notice("HiMD-SMOKE-SCENARIO mermaid-toggle err=\(String(describing: err), privacy: .public)")
+                            NSLog("HiMD-SMOKE-SCENARIO mermaid-toggle err=%@", String(describing: err))
+                        }
+                        if let dict = result as? [String: Any] {
+                            let ok = (dict["ok"] as? Bool) ?? false
+                            hiLog.notice("HiMD-SMOKE-SCENARIO mermaid-toggle ok=\(ok, privacy: .public) payload=\(String(describing: dict), privacy: .public)")
+                            NSLog("HiMD-SMOKE-SCENARIO mermaid-toggle ok=%@ dict=%@", ok ? "true" : "false", (dict as NSDictionary).description)
+                        } else {
+                            hiLog.notice("HiMD-SMOKE-SCENARIO mermaid-toggle unexpected=\(String(describing: result), privacy: .public)")
+                            NSLog("HiMD-SMOKE-SCENARIO mermaid-toggle unexpected=%@", String(describing: result))
+                        }
+                        next()
+                    }
+                }
+            }
+
         case "scroll-parity":
             guard let coord = WebEditorCoordinator.shared else {
                 hiLog.notice("HiMD-SMOKE-SCENARIO scroll-parity no-coordinator")

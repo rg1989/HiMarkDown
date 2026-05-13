@@ -5,6 +5,18 @@ xcuserdata/
 *.xcuserstate
 WebEditor/node_modules/
 
+# Local Xcode `-derivedDataPath` (e.g. Cursor/agent builds next to the repo)
+build-xcode-dd/
+build-dd/
+
+# Playwright / WebEditor E2E output
+WebEditor/test-results/
+WebEditor/playwright-report/
+WebEditor/blob-report/
+
+# Xcode test bundles
+*.xcresult
+
 # Release artifacts produced by tools/release.sh and CI
 build/
 dist/
