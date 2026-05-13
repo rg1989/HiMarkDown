@@ -1,6 +1,8 @@
 # HiMarkDown
 
-A native macOS Markdown editor with a beautiful WYSIWYG **HTML** mode (powered by TipTap) and a syntax-highlighted **Markdown** source mode side by side. Outline navigation, find/replace, full undo/redo, and a themed UI that adapts to light & dark appearance.
+A **lightweight native macOS** Markdown app for people who live in `.md` files: read your notes in a **clear, typographic layout** that feels like a real document—not a wall of hashes and fences—while still **editing naturally**, as if you were writing in a simple blog editor, without the weight of a full IDE. Switch to syntax-highlighted **Markdown** source whenever you want the raw text.
+
+**Mermaid** diagrams in Markdown code fences tagged `mermaid` render as **live charts** in HTML mode (with source preview when you need to tweak the syntax). The look of the page is **highly customizable**: typography, colors, content width, and accents are yours to tune in **Settings → Style**, with presets for light, dark, and themed chrome.
 
 **Created and maintained by [rg1989](https://github.com/rg1989).** Source code and releases: **[github.com/rg1989/HiMarkDown](https://github.com/rg1989/HiMarkDown)**.
 
@@ -12,7 +14,11 @@ A native macOS Markdown editor with a beautiful WYSIWYG **HTML** mode (powered b
 
 ![HiMarkDown HTML mode with outline sidebar](docs/readme/screenshot-html-mode.png)
 
-**Markdown mode** — syntax-highlighted source editing with the same outline for quick jumps.
+**HTML mode — Mermaid** — the same view with a live diagram from a `mermaid` code fence; use the toolbar control to switch back to source when you want to edit the chart text.
+
+![HiMarkDown HTML mode showing a rendered Mermaid flowchart](docs/readme/screenshot-html-mermaid.png)
+
+**Markdown mode** — syntax-highlighted source editing with the same outline for quick jumps (including fenced `mermaid` blocks as plain text when you need the raw syntax).
 
 ![HiMarkDown Markdown mode with outline sidebar](docs/readme/screenshot-markdown-mode.png)
 
@@ -20,9 +26,9 @@ A native macOS Markdown editor with a beautiful WYSIWYG **HTML** mode (powered b
 
 ## Why this project exists
 
-If you work a lot with AI tooling, you live in Markdown: plans, agent skills, READMEs, handoff notes, and long context files are almost always `.md`. That is great for machines and diffs, but it creates a daily friction: **opening a full development environment** (Cursor, VS Code, or similar) just to *read* or lightly edit a single file feels heavy, and **raw Markdown in a plain text buffer** is not how humans prefer to skim structure. Headings, lists, and code blocks are all “there,” but they are not easy to scan or navigate the way a rendered page is.
+If you work a lot with AI tooling, you live in Markdown: plans, agent skills, READMEs, handoff notes, and long context files are almost always `.md`. That is great for machines and diffs, but it creates a daily friction: **opening a full development environment** (Cursor, VS Code, or similar) just to *read* or lightly edit a single file feels heavy, and **raw Markdown in a plain text buffer** is not how humans prefer to skim structure. Headings, lists, and code blocks are all “there,” but they are not easy to scan or navigate the way a styled, readable page is.
 
-HiMarkDown is a **small, focused native app** built for that workflow. It opens Markdown files like any other document app, renders them as **readable HTML** so structure and typography match how you actually consume the content, lets you **edit in that HTML view** when you want a WYSIWYG surface, and keeps a **syntax-highlighted source mode** when you need the raw text. A **heading outline** gives you a table-of-contents for the file: jump to sections quickly instead of scrolling through hashes and asterisks. The goal is comfort and speed for everyday Markdown—not a second IDE.
+HiMarkDown is a **small, focused native app** built for that workflow. It opens Markdown files like any other document app, renders them as **readable HTML** so structure and typography match how you actually consume the content, lets you **edit in that HTML view** when you want a WYSIWYG surface that does not get in your way, and keeps a **syntax-highlighted source mode** when you need the raw text. **Mermaid** blocks become diagrams you can actually *see*—important for architecture notes, flowcharts, and timelines—without pasting into another tool. A **heading outline** gives you a table-of-contents for the file: jump to sections quickly instead of scrolling through hashes and asterisks. You can **personalize** how the document looks (fonts, colors, width) so long reading sessions stay comfortable. The goal is comfort and speed for everyday Markdown—not a second IDE.
 
 This repository is **open source** so anyone with the same itch can use it, improve it, or adapt it. If that sounds like your day job too, you are the audience.
 
@@ -91,10 +97,12 @@ To produce a signed `.app.zip` + `.dmg` in `dist/` (the same way CI does):
 ## Features
 
 - **Two modes, one document.** Toggle between rich HTML rendering (TipTap) and the raw Markdown source. Scroll position and outline anchor are preserved across the switch.
+- **Styled reading, natural editing** — HTML mode presents your file with real typography and spacing so structure is easy to see; you can edit inline without fighting raw syntax for everyday changes.
+- **Mermaid diagrams** — fenced `mermaid` code blocks render as SVG previews in HTML mode, with a simple source / diagram toggle for editing the chart text.
 - **Outline sidebar** — collapsible heading tree, click to jump (with a yellow flash). Resizable column with persisted width.
 - **Themed UI** — Indigo brand chrome across the toolbar, sidebar and welcome hero. Adapts to light & dark macOS appearance.
 - **Markdown syntax highlighting** in the source mode — headings, bold/italic, inline code, fenced code blocks, links, lists, blockquotes, and horizontal rules.
-- **Custom HTML rendering** — every visual element (page background, body text, headings, links, code blocks, blockquote border, accent color, font stack, content width) is editable from **Settings → Style**, with light/dark/themed quick presets.
+- **Custom HTML rendering** — every visual element (page background, body text, headings, links, code blocks, blockquote border, accent color, font stack, content width) is editable from **Settings → Style**, with light/dark/themed quick presets so you can personalize the reading experience.
 - **Full undo/redo** that spans both modes (single document UndoManager).
 - **Find & Replace** in both modes.
 - **Markdown file association** — opens `.md`, `.markdown`, `.mdown` from Finder, double-click, and recent files.
