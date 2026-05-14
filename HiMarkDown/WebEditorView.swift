@@ -1,5 +1,5 @@
 import SwiftUI
-import WebKit
+@preconcurrency import WebKit
 
 @MainActor
 final class WebEditorCoordinator: NSObject, ObservableObject, WKScriptMessageHandler, WKNavigationDelegate {

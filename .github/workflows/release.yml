@@ -41,6 +41,9 @@ jobs:
   build:
     runs-on: macos-14
     timeout-minutes: 30
+    env:
+      # GitHub is migrating JS actions off Node 20; opt in early (see GH changelog 2025-09-19).
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - name: Checkout

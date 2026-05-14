@@ -33,7 +33,8 @@ final class HiAppDelegate: NSObject, NSApplicationDelegate {
 
         if let fileArg = args.first(where: { $0.hasPrefix("--himd-smoke-file=") }) {
             let path = String(fileArg.dropFirst("--himd-smoke-file=".count))
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 500_000_000)
                 let url = URL(fileURLWithPath: path)
                 NotificationCenter.default.post(name: .hiOpenFiles, object: url)
             }
@@ -48,13 +49,16 @@ final class HiAppDelegate: NSObject, NSApplicationDelegate {
             .map { String($0.dropFirst("--himd-smoke-scenario=".count)) }
         if !scenarios.isEmpty {
             Self.waitForDocLoaded {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 600_000_000)
                     Self.runScenarios(scenarios)
                 }
             }
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+        Task { @MainActor in
+            let ns = UInt64(max(0, delay) * 1_000_000_000)
+            try? await Task.sleep(nanoseconds: ns)
             let dirty = HiAppDelegate.document?.isDirty ?? false
             let title = HiAppDelegate.document?.displayName ?? "?"
             let mdLen = HiAppDelegate.document?.markdown.count ?? -1
@@ -64,23 +68,21 @@ final class HiAppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private static func waitForDocLoaded(timeout: TimeInterval = 8, _ done: @escaping () -> Void) {
-        let deadline = Date().addingTimeInterval(timeout)
-        func tick() {
-            if let doc = HiAppDelegate.document,
-               !doc.markdown.isEmpty,
-               !doc.headings.isEmpty {
-                done()
-                return
+    private static func waitForDocLoaded(timeout: TimeInterval = 8, _ done: @escaping @Sendable () -> Void) {
+        Task { @MainActor in
+            let deadline = Date().addingTimeInterval(timeout)
+            while Date() <= deadline {
+                if let doc = HiAppDelegate.document,
+                   !doc.markdown.isEmpty,
+                   !doc.headings.isEmpty {
+                    done()
+                    return
+                }
+                try? await Task.sleep(nanoseconds: 100_000_000)
             }
-            if Date() > deadline {
-                hiLog.notice("HiMD-SMOKE waitForDocLoaded TIMEOUT mdLen=\(HiAppDelegate.document?.markdown.count ?? -1, privacy: .public) headings=\(HiAppDelegate.document?.headings.count ?? -1, privacy: .public)")
-                done()
-                return
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: tick)
+            hiLog.notice("HiMD-SMOKE waitForDocLoaded TIMEOUT mdLen=\(HiAppDelegate.document?.markdown.count ?? -1, privacy: .public) headings=\(HiAppDelegate.document?.headings.count ?? -1, privacy: .public)")
+            done()
         }
-        tick()
     }
 
     private static func runScenarios(_ scenarios: [String]) {
