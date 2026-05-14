@@ -105,6 +105,8 @@ bold "▸ Mounting DMG…"
 # volume name contains spaces (e.g. /Volumes/HiMarkDown 1.0): `awk '{print $NF}'`
 # would wrongly return only the last token ("1.0").
 MOUNT_PLIST="$(hdiutil attach -nobrowse -noverify -noautoopen -plist "$DMG_PATH")"
+# Parsing must stay in sync with tools/install_mountpoint_from_plist.py; CI runs
+# tools/verify-install-sh.sh (plistlib.loads + pipe-safe stdin, not awk $NF).
 MOUNT_POINT="$(printf '%s' "$MOUNT_PLIST" | /usr/bin/python3 -c '
 import plistlib, sys
 # stdin from a pipe is not seekable; plistlib.load() needs a buffer it can seek.
