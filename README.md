@@ -99,7 +99,7 @@ To produce a signed `.app.zip` + `.dmg` in `dist/` (the same way CI does):
 - **Two modes, one document.** Toggle between rich HTML rendering (TipTap) and the raw Markdown source. Scroll position and outline anchor are preserved across the switch.
 - **Styled reading, natural editing** — HTML mode presents your file with real typography and spacing so structure is easy to see; you can edit inline without fighting raw syntax for everyday changes.
 - **Mermaid diagrams** — fenced `mermaid` code blocks render as SVG previews in HTML mode, with a simple source / diagram toggle for editing the chart text.
-- **Outline sidebar** — collapsible heading tree, click to jump (with a yellow flash). Resizable column with persisted width.
+- **Outline sidebar** — collapsible heading tree, click to jump (brief **brand-tinted glow** around the heading so you see where you landed). Resizable column with persisted width.
 - **Themed UI** — Indigo brand chrome across the toolbar, sidebar and welcome hero. Adapts to light & dark macOS appearance.
 - **Markdown syntax highlighting** in the source mode — headings, bold/italic, inline code, fenced code blocks, links, lists, blockquotes, and horizontal rules.
 - **Custom HTML rendering** — every visual element (page background, body text, headings, links, code blocks, blockquote border, accent color, font stack, content width) is editable from **Settings → Style**, with light/dark/themed quick presets so you can personalize the reading experience.
