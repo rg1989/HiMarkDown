@@ -107,7 +107,8 @@ bold "▸ Mounting DMG…"
 MOUNT_PLIST="$(hdiutil attach -nobrowse -noverify -noautoopen -plist "$DMG_PATH")"
 MOUNT_POINT="$(printf '%s' "$MOUNT_PLIST" | /usr/bin/python3 -c '
 import plistlib, sys
-p = plistlib.load(sys.stdin.buffer)
+# stdin from a pipe is not seekable; plistlib.load() needs a buffer it can seek.
+p = plistlib.loads(sys.stdin.buffer.read())
 path = ""
 for e in p.get("system-entities", []):
     mp = e.get("mount-point")
