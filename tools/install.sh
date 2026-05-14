@@ -41,8 +41,8 @@ fi
 
 bold "▸ Asking GitHub for the latest ${APP_NAME} release…"
 META_JSON="$(curl -fsSL "$API_URL")" || {
-    red "✗ Could not reach $API_URL"
-    red "  Check your network connection or set HIMD_OWNER / HIMD_REPO env vars."
+    red "✗ Could not fetch $API_URL"
+    red "  Common causes: (1) this repo has no published GitHub Release yet — create one and attach the .dmg; (2) wrong fork — set HIMD_OWNER and HIMD_REPO; (3) private repo without auth; (4) offline."
     exit 1
 }
 
