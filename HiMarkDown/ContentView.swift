@@ -16,13 +16,12 @@ struct ContentView: View {
     @State private var sidebarVisible: Bool = true
 
     /// Default ~½ previous ideal (260 → 140). Drag the divider to resize; max
-    /// matches the old upper bound (380). Persisted per-window.
-    @SceneStorage("hiOutlineColumnWidth") private var outlineColumnWidth: Double = 140
-    /// Live width during an active drag. We do NOT write to @SceneStorage on
-    /// every onChanged tick — that re-encodes through the scene-restoration
-    /// pipeline and produces visible jitter while dragging. Instead we update
-    /// this @State (cheap, in-memory) for every frame and only commit the
-    /// final value to @SceneStorage in onEnded.
+    /// matches the old upper bound (380). `AppStorage` survives full app quit;
+    /// `SceneStorage` alone often did not without full window state restoration.
+    @AppStorage("hiOutlineColumnWidth") private var outlineColumnWidth: Double = 140
+    /// Live width during an active drag. We do not write to persistent storage on
+    /// every onChanged tick — that would churn UserDefaults and can jitter. We
+    /// update this @State for each frame and commit the final width in onEnded.
     @State private var liveOutlineWidth: Double?
     @State private var outlineResizeOrigin: Double?
 

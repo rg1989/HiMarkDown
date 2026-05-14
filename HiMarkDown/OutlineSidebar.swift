@@ -20,53 +20,11 @@ struct OutlineSidebar: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     .padding(8)
             } else {
-                List {
-                    ForEach(groups, id: \.root.index) { group in
-                        let key = outlineKey(group.root)
-                        if group.children.isEmpty {
-                            Button {
-                                onSelectHeading(group.root.index)
-                            } label: {
-                                Text(group.root.title.outlineDecodedBasicEntities)
-                                    .fontWeight(.semibold)
-                                    .lineLimit(2)
-                                    .foregroundStyle(HiAppearance.brand)
-                            }
-                            .buttonStyle(.plain)
-                            .listRowBackground(
-                                outlineRowBackground(
-                                    isActive: isRootOutlineRowActive(group: group, disclosureKey: key)
-                                )
-                            )
-                        } else {
-                            DisclosureGroup(
-                                isExpanded: Binding(
-                                    get: { document.outlineExpanded.contains(key) },
-                                    set: { expanded in
-                                        DispatchQueue.main.async {
-                                            if expanded {
-                                                document.outlineExpanded.insert(key)
-                                            } else {
-                                                document.outlineExpanded.remove(key)
-                                            }
-                                        }
-                                    }
-                                )
-                            ) {
-                                ForEach(group.children, id: \.index) { child in
-                                    Button {
-                                        onSelectHeading(child.index)
-                                    } label: {
-                                        Text(child.title.outlineDecodedBasicEntities)
-                                            .lineLimit(2)
-                                            .foregroundStyle(.primary)
-                                    }
-                                    .buttonStyle(.plain)
-                                    .listRowBackground(
-                                        outlineRowBackground(isActive: document.outlineSyncedHeadingIndex == child.index)
-                                    )
-                                }
-                            } label: {
+                ScrollViewReader { scrollProxy in
+                    List {
+                        ForEach(groups, id: \.root.index) { group in
+                            let key = outlineKey(group.root)
+                            if group.children.isEmpty {
                                 Button {
                                     onSelectHeading(group.root.index)
                                 } label: {
@@ -76,18 +34,77 @@ struct OutlineSidebar: View {
                                         .foregroundStyle(HiAppearance.brand)
                                 }
                                 .buttonStyle(.plain)
+                                .id(group.root.index)
                                 .listRowBackground(
                                     outlineRowBackground(
                                         isActive: isRootOutlineRowActive(group: group, disclosureKey: key)
                                     )
                                 )
+                            } else {
+                                DisclosureGroup(
+                                    isExpanded: Binding(
+                                        get: { document.outlineExpanded.contains(key) },
+                                        set: { expanded in
+                                            DispatchQueue.main.async {
+                                                if expanded {
+                                                    document.outlineExpanded.insert(key)
+                                                } else {
+                                                    document.outlineExpanded.remove(key)
+                                                }
+                                            }
+                                        }
+                                    )
+                                ) {
+                                    ForEach(group.children, id: \.index) { child in
+                                        Button {
+                                            onSelectHeading(child.index)
+                                        } label: {
+                                            Text(child.title.outlineDecodedBasicEntities)
+                                                .lineLimit(2)
+                                                .foregroundStyle(.primary)
+                                        }
+                                        .buttonStyle(.plain)
+                                        .id(child.index)
+                                        .listRowBackground(
+                                            outlineRowBackground(isActive: document.outlineSyncedHeadingIndex == child.index)
+                                        )
+                                    }
+                                } label: {
+                                    Button {
+                                        onSelectHeading(group.root.index)
+                                    } label: {
+                                        Text(group.root.title.outlineDecodedBasicEntities)
+                                            .fontWeight(.semibold)
+                                            .lineLimit(2)
+                                            .foregroundStyle(HiAppearance.brand)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .listRowBackground(
+                                        outlineRowBackground(
+                                            isActive: isRootOutlineRowActive(group: group, disclosureKey: key)
+                                        )
+                                    )
+                                }
+                                .id(group.root.index)
                             }
                         }
                     }
+                    .listStyle(.sidebar)
+                    .tint(HiAppearance.brand)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onChange(of: document.outlineSyncedHeadingIndex) { _ in
+                        scrollOutlineToSyncedSelection(
+                            proxy: scrollProxy,
+                            groups: HeadingParser.outlineGroups(document.headings)
+                        )
+                    }
+                    .onChange(of: document.outlineExpanded) { _ in
+                        scrollOutlineToSyncedSelection(
+                            proxy: scrollProxy,
+                            groups: HeadingParser.outlineGroups(document.headings)
+                        )
+                    }
                 }
-                .listStyle(.sidebar)
-                .tint(HiAppearance.brand)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -99,6 +116,37 @@ struct OutlineSidebar: View {
         .onAppear {
             Task { @MainActor in
                 expandBranchGroupsOnly()
+            }
+        }
+    }
+
+    /// Which list row id `ScrollViewReader` should center on: child row when
+    /// expanded, otherwise the parent row (the only visible target when folded).
+    private func outlineScrollTargetID(synced: Int?, groups: [HeadingOutlineGroup]) -> Int? {
+        guard let synced else { return nil }
+        for g in groups {
+            if synced == g.root.index {
+                return g.root.index
+            }
+            if g.children.contains(where: { $0.index == synced }) {
+                let key = outlineKey(g.root)
+                let expanded = document.outlineExpanded.contains(key)
+                return expanded ? synced : g.root.index
+            }
+        }
+        return nil
+    }
+
+    private func scrollOutlineToSyncedSelection(
+        proxy: ScrollViewProxy,
+        groups: [HeadingOutlineGroup]
+    ) {
+        guard let id = outlineScrollTargetID(synced: document.outlineSyncedHeadingIndex, groups: groups) else {
+            return
+        }
+        DispatchQueue.main.async {
+            withAnimation(.easeInOut(duration: 0.22)) {
+                proxy.scrollTo(id, anchor: .center)
             }
         }
     }
