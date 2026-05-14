@@ -1,4 +1,4 @@
-# HiMarkDown
+# Oh, HiMarkDown
 
 A **lightweight native macOS** Markdown app for people who live in `.md` files: read your notes in a **clear, typographic layout** that feels like a real document—not a wall of hashes and fences—while still **editing naturally**, as if you were writing in a simple blog editor, without the weight of a full IDE. Switch to syntax-highlighted **Markdown** source whenever you want the raw text.
 
