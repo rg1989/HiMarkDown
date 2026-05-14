@@ -101,8 +101,24 @@ else
 fi
 
 bold "▸ Mounting DMG…"
-MOUNT_OUT="$(hdiutil attach -nobrowse -noverify -noautoopen "$DMG_PATH")"
-MOUNT_POINT="$(printf '%s' "$MOUNT_OUT" | tail -n1 | awk '{print $NF}')"
+# Use plist output so we get the real mount path. Text output breaks when the
+# volume name contains spaces (e.g. /Volumes/HiMarkDown 1.0): `awk '{print $NF}'`
+# would wrongly return only the last token ("1.0").
+MOUNT_PLIST="$(hdiutil attach -nobrowse -noverify -noautoopen -plist "$DMG_PATH")"
+MOUNT_POINT="$(printf '%s' "$MOUNT_PLIST" | /usr/bin/python3 -c '
+import plistlib, sys
+p = plistlib.load(sys.stdin.buffer)
+path = ""
+for e in p.get("system-entities", []):
+    mp = e.get("mount-point")
+    if mp:
+        path = mp
+print(path)
+')"
+if [[ -z "$MOUNT_POINT" || ! -d "$MOUNT_POINT" ]]; then
+    red "✗ Could not determine DMG mount point from hdiutil plist output."
+    exit 1
+fi
 dim "  mounted at $MOUNT_POINT"
 
 cleanup_mount() {
