@@ -139,7 +139,7 @@ fi
 
 DEST_APP="$INSTALL_DIR/${APP_NAME}.app"
 if [[ -d "$DEST_APP" ]]; then
-    bold "▸ Removing previous installation at $DEST_APP…"
+    bold "▸ Removing previous installation at ${DEST_APP}…"
     if [[ -w "$INSTALL_DIR" ]]; then
         rm -rf "$DEST_APP"
     else
@@ -147,7 +147,7 @@ if [[ -d "$DEST_APP" ]]; then
     fi
 fi
 
-bold "▸ Copying ${APP_NAME}.app to $INSTALL_DIR…"
+bold "▸ Copying ${APP_NAME}.app to ${INSTALL_DIR}…"
 if [[ -w "$INSTALL_DIR" ]]; then
     cp -R "$SRC_APP" "$INSTALL_DIR/"
 else

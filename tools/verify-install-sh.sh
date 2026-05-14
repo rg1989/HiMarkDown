@@ -36,4 +36,10 @@ if grep -E "MOUNT_POINT=.*print \$NF" "$INSTALL_SH"; then
   exit 1
 fi
 
+echo "▸ bash UTF-8: no \$VAR… (use \${VAR}… ) before Unicode ellipsis"
+if grep -E '\$[A-Za-z_][A-Za-z0-9_]*…' "$INSTALL_SH"; then
+  echo "✗ install.sh: use \${NAME}… not \$NAME… before Unicode ellipsis (bash/set -u)" >&2
+  exit 1
+fi
+
 echo "✓ verify-install-sh OK"
