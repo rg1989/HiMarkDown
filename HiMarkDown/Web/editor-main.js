@@ -21786,7 +21786,7 @@ var Hs = qk(), Wk = /^-{3}\s*[\n\r](.*?)[\n\r]-{3}\s*[\n\r]+/s, Vo = /%{2}{\s*(?
   s0[e] || (W.warn(qR[e]), s0[e] = !0);
 }, "issueWarning"), t1 = /* @__PURE__ */ x((e) => {
   e && (e.lazyLoadedDiagrams || e.loadExternalDiagramsAtStartup) && Qk("LAZY_LOAD_DEPRECATED");
-}, "checkConfig"), q9 = /* @__PURE__ */ x(() => {
+}, "checkConfig"), W9 = /* @__PURE__ */ x(() => {
   let e = {};
   Ec && (e = ne(e, Ec));
   for (const t of En)
@@ -21855,7 +21855,7 @@ var r1 = /* @__PURE__ */ x((e) => (jR(), Hs.sanitize(e)), "removeScript"), o0 = 
 }, "processSet"), l0 = /* @__PURE__ */ x(() => window.MathMLElement !== void 0, "isMathMLSupported"), Wd = /\$\$(.*)\$\$/g, aa = /* @__PURE__ */ x((e) => {
   var t;
   return (((t = e.match(Wd)) == null ? void 0 : t.length) ?? 0) > 0;
-}, "hasKatex"), W9 = /* @__PURE__ */ x(async (e, t) => {
+}, "hasKatex"), j9 = /* @__PURE__ */ x(async (e, t) => {
   const r = document.createElement("div");
   r.innerHTML = await n1(e, t), r.id = "katex-temp", r.style.visibility = "hidden", r.style.position = "absolute", r.style.top = "0";
   const i = document.querySelector("body");
@@ -22056,7 +22056,7 @@ var Gp = "", Xp = "", Kp = "", Jp = /* @__PURE__ */ x((e) => Mr(e, Ht()), "sanit
 `);
 }, "setAccDescription"), u$ = /* @__PURE__ */ x(() => Kp, "getAccDescription"), d$ = /* @__PURE__ */ x((e) => {
   Xp = Jp(e);
-}, "setDiagramTitle"), f$ = /* @__PURE__ */ x(() => Xp, "getDiagramTitle"), c0 = W, p$ = Up, Bt = Ht, j9 = Jk, V9 = qs, Zp = /* @__PURE__ */ x((e) => Mr(e, Bt()), "sanitizeText"), g$ = i$, m$ = /* @__PURE__ */ x(() => o1, "getCommonDb"), Oc = {}, Ic = /* @__PURE__ */ x((e, t, r) => {
+}, "setDiagramTitle"), f$ = /* @__PURE__ */ x(() => Xp, "getDiagramTitle"), c0 = W, p$ = Up, Bt = Ht, V9 = Jk, U9 = qs, Zp = /* @__PURE__ */ x((e) => Mr(e, Bt()), "sanitizeText"), g$ = i$, m$ = /* @__PURE__ */ x(() => o1, "getCommonDb"), Oc = {}, Ic = /* @__PURE__ */ x((e, t, r) => {
   var i;
   Oc[e] && c0.warn(`Diagram with id ${e} already registered. Overwriting.`), Oc[e] = t, r && Vk(e, r), s$(e, t.styles), (i = t.injectUtils) == null || i.call(
     t,
@@ -23024,7 +23024,7 @@ function u3(e, t, r) {
     return Math.pow(e + i * t, r);
   };
 }
-function U9(e, t) {
+function Y9(e, t) {
   var r = t - e;
   return r ? w1(e, r > 180 || r < -180 ? r - 360 * Math.round(r / 360) : r) : rg(isNaN(e) ? t : e);
 }
@@ -23775,11 +23775,11 @@ function Qn(e) {
     return e;
   };
 }
-const Y9 = Math.abs, G9 = Math.atan2, X9 = Math.cos, K9 = Math.max, J9 = Math.min, Z9 = Math.sin, Q9 = Math.sqrt, B0 = 1e-12, og = Math.PI, M0 = og / 2, t7 = 2 * og;
-function e7(e) {
+const G9 = Math.abs, X9 = Math.atan2, K9 = Math.cos, J9 = Math.max, Z9 = Math.min, Q9 = Math.sin, t7 = Math.sqrt, B0 = 1e-12, og = Math.PI, M0 = og / 2, e7 = 2 * og;
+function r7(e) {
   return e > 1 ? 0 : e < -1 ? og : Math.acos(e);
 }
-function r7(e) {
+function i7(e) {
   return e >= 1 ? M0 : e <= -1 ? -M0 : Math.asin(e);
 }
 function RN(e) {
@@ -26823,7 +26823,7 @@ var Sr = {
   }), t;
 }, "encodeEntities"), In = /* @__PURE__ */ x(function(e) {
   return e.replace(/ﬂ°°/g, "&#").replace(/ﬂ°/g, "&").replace(/¶ß/g, ";");
-}, "decodeEntities"), i7 = /* @__PURE__ */ x((e, t, {
+}, "decodeEntities"), n7 = /* @__PURE__ */ x((e, t, {
   counter: r = 0,
   prefix: i,
   suffix: n
@@ -29903,7 +29903,7 @@ var v4 = /* @__PURE__ */ x((e, t) => {
 }, $T = /* @__PURE__ */ new Map(), O4 = /* @__PURE__ */ x(async (e, t) => {
   const r = t.shape || "rect", i = await F4[r](e, t);
   return $T.set(t.id, i), i;
-}, "insertCluster"), c7 = /* @__PURE__ */ x(() => {
+}, "insertCluster"), h7 = /* @__PURE__ */ x(() => {
   $T = /* @__PURE__ */ new Map();
 }, "clear");
 function DT(e, t) {
@@ -32807,11 +32807,11 @@ async function rv(e, t, r) {
   return i.attr("data-look", de(t.look)), t.tooltip && n.attr("title", t.tooltip), Wh.set(t.id, i), t.haveCallback && i.attr("class", i.attr("class") + " clickable"), i;
 }
 x(rv, "insertNode");
-var h7 = /* @__PURE__ */ x((e, t) => {
+var u7 = /* @__PURE__ */ x((e, t) => {
   Wh.set(t.id, e);
-}, "setNodeElem"), u7 = /* @__PURE__ */ x(() => {
+}, "setNodeElem"), d7 = /* @__PURE__ */ x(() => {
   Wh.clear();
-}, "clear"), d7 = /* @__PURE__ */ x((e) => {
+}, "clear"), f7 = /* @__PURE__ */ x((e) => {
   const t = Wh.get(e.id);
   W.trace(
     "Transforming node",
@@ -32887,7 +32887,7 @@ var h7 = /* @__PURE__ */ x((e, t) => {
 }, "addEdgeMarker"), i6 = /* @__PURE__ */ x((e) => {
   var t, r;
   return typeof e == "string" ? e : (r = (t = Bt()) == null ? void 0 : t.flowchart) == null ? void 0 : r.curve;
-}, "resolveEdgeCurveType"), sh = /* @__PURE__ */ new Map(), me = /* @__PURE__ */ new Map(), f7 = /* @__PURE__ */ x(() => {
+}, "resolveEdgeCurveType"), sh = /* @__PURE__ */ new Map(), me = /* @__PURE__ */ new Map(), p7 = /* @__PURE__ */ x(() => {
   sh.clear(), me.clear();
 }, "clear"), mo = /* @__PURE__ */ x((e) => e ? typeof e == "string" ? e : e.reduce((t, r) => t + ";" + r, "") : "", "getLabelStyles"), n6 = /* @__PURE__ */ x(async (e, t) => {
   const r = Bt();
@@ -33462,7 +33462,7 @@ var u6 = /* @__PURE__ */ x((e, t, r, i) => {
   ]);
 }, "registerDefaultLayoutLoaders");
 D6();
-var p7 = /* @__PURE__ */ x(async (e, t) => {
+var g7 = /* @__PURE__ */ x(async (e, t) => {
   if (!(e.layoutAlgorithm in ya))
     throw new Error(`Unknown layout algorithm: ${e.layoutAlgorithm}`);
   if (e.diagramId)
@@ -33478,7 +33478,7 @@ var p7 = /* @__PURE__ */ x(async (e, t) => {
   return i.render(e, t, $6, {
     algorithm: r.algorithm
   });
-}, "render"), g7 = /* @__PURE__ */ x((e = "", { fallback: t = "dagre" } = {}) => {
+}, "render"), m7 = /* @__PURE__ */ x((e = "", { fallback: t = "dagre" } = {}) => {
   if (e in ya)
     return e;
   if (t in ya)
@@ -36857,12 +36857,15 @@ window.__HiMD = {
   replaceInMarkdownFirst: F9,
   replaceInMarkdownAll: E9
 };
-document.addEventListener("DOMContentLoaded", () => {
+function O9(e) {
+  document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", e) : e();
+}
+O9(() => {
   w9(), Jg(), yB(bB());
 });
 export {
   o1 as $,
-  V9 as A,
+  U9 as A,
   Hi as B,
   AI as C,
   Ht as D,
@@ -36874,7 +36877,7 @@ export {
   tP as J,
   bR as K,
   aa as L,
-  W9 as M,
+  j9 as M,
   Dh as N,
   XR as O,
   n1 as P,
@@ -36894,13 +36897,13 @@ export {
   RN as a0,
   M0 as a1,
   B0 as a2,
-  t7 as a3,
-  X9 as a4,
-  Z9 as a5,
-  J9 as a6,
-  Y9 as a7,
+  e7 as a3,
+  K9 as a4,
+  Q9 as a5,
+  Z9 as a6,
+  G9 as a7,
   og as a8,
-  Q9 as a9,
+  t7 as a9,
   WS as aA,
   kP as aB,
   bP as aC,
@@ -36923,19 +36926,19 @@ export {
   tT as aT,
   Pk as aU,
   R6 as aV,
-  u7 as aW,
-  f7 as aX,
-  c7 as aY,
+  d7 as aW,
+  p7 as aX,
+  h7 as aY,
   et as aZ,
-  h7 as a_,
-  G9 as aa,
+  u7 as a_,
+  X9 as aa,
   Qn as ab,
-  r7 as ac,
-  e7 as ad,
-  K9 as ae,
+  i7 as ac,
+  r7 as ad,
+  J9 as ae,
   O4 as af,
   rv as ag,
-  d7 as ah,
+  f7 as ah,
   gt as ai,
   jr as aj,
   Bg as ak,
@@ -36958,7 +36961,7 @@ export {
   s6 as b0,
   n6 as b1,
   $N as b2,
-  q9 as b3,
+  W9 as b3,
   vI as b4,
   BI as b5,
   Fa as b6,
@@ -36977,7 +36980,7 @@ export {
   b1 as bj,
   _a as bk,
   S1 as bl,
-  U9 as bm,
+  Y9 as bm,
   _I as bn,
   Bt as c,
   Ct as d,
@@ -36990,17 +36993,17 @@ export {
   Ba as k,
   W as l,
   ZS as m,
-  j9 as n,
-  g7 as o,
+  V9 as n,
+  m7 as o,
   d$ as p,
   f$ as q,
-  p7 as r,
+  g7 as r,
   h$ as s,
   eP as t,
   Sr as u,
   Q4 as v,
   GP as w,
-  i7 as x,
+  n7 as x,
   Hs as y,
   a$ as z
 };
