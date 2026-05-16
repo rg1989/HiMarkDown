@@ -5,13 +5,13 @@ export default defineConfig({
   build: {
     lib: {
       entry: resolve(__dirname, "src/main.ts"),
-      formats: ["es"],
+      name: "HiMDEditor",
+      formats: ["iife"],
       fileName: () => "editor.js",
     },
     rollupOptions: {
       output: {
-        entryFileNames: "editor.js",
-        chunkFileNames: "editor-[name].js",
+        inlineDynamicImports: true,
       },
     },
     outDir: resolve(__dirname, "../HiMarkDown/Web"),

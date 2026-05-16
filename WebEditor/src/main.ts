@@ -481,17 +481,7 @@ function replaceInMarkdownFirst(search: string, replacement: string) {
   replaceInMarkdownAll,
 };
 
-// ES modules are deferred — DOMContentLoaded may already have fired by the
-// time this module executes, so check readyState before adding the listener.
-function onDOMReady(cb: () => void) {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", cb);
-  } else {
-    cb();
-  }
-}
-
-onDOMReady(() => {
+document.addEventListener("DOMContentLoaded", () => {
   initWelcomePanel();
   initEditor();
   syncWelcomeVisibility(getMarkdown());
