@@ -5,6 +5,10 @@ struct OutlineSidebar: View {
 
     var onSelectHeading: (Int) -> Void
 
+    private var tree: [OutlineNode] {
+        HeadingParser.outlineTree(document.headings)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Outline")
@@ -13,8 +17,7 @@ struct OutlineSidebar: View {
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
             Divider()
-            let groups = HeadingParser.outlineGroups(document.headings)
-            if groups.isEmpty {
+            if tree.isEmpty {
                 Text("No headings")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -22,128 +25,58 @@ struct OutlineSidebar: View {
             } else {
                 ScrollViewReader { scrollProxy in
                     List {
-                        ForEach(groups, id: \.root.index) { group in
-                            let key = outlineKey(group.root)
-                            if group.children.isEmpty {
-                                Button {
-                                    onSelectHeading(group.root.index)
-                                } label: {
-                                    Text(group.root.title.outlineDecodedBasicEntities)
-                                        .fontWeight(.semibold)
-                                        .lineLimit(2)
-                                        .foregroundStyle(HiAppearance.brand)
-                                }
-                                .buttonStyle(.plain)
-                                .id(group.root.index)
-                                .listRowBackground(
-                                    outlineRowBackground(
-                                        isActive: isRootOutlineRowActive(group: group, disclosureKey: key)
-                                    )
-                                )
-                            } else {
-                                DisclosureGroup(
-                                    isExpanded: Binding(
-                                        get: { document.outlineExpanded.contains(key) },
-                                        set: { expanded in
-                                            DispatchQueue.main.async {
-                                                if expanded {
-                                                    document.outlineExpanded.insert(key)
-                                                } else {
-                                                    document.outlineExpanded.remove(key)
-                                                }
-                                            }
-                                        }
-                                    )
-                                ) {
-                                    ForEach(group.children, id: \.index) { child in
-                                        Button {
-                                            onSelectHeading(child.index)
-                                        } label: {
-                                            Text(child.title.outlineDecodedBasicEntities)
-                                                .lineLimit(2)
-                                                .foregroundStyle(.primary)
-                                        }
-                                        .buttonStyle(.plain)
-                                        .id(child.index)
-                                        .listRowBackground(
-                                            outlineRowBackground(isActive: document.outlineSyncedHeadingIndex == child.index)
-                                        )
-                                    }
-                                } label: {
-                                    Button {
-                                        onSelectHeading(group.root.index)
-                                    } label: {
-                                        Text(group.root.title.outlineDecodedBasicEntities)
-                                            .fontWeight(.semibold)
-                                            .lineLimit(2)
-                                            .foregroundStyle(HiAppearance.brand)
-                                    }
-                                    .buttonStyle(.plain)
-                                    .listRowBackground(
-                                        outlineRowBackground(
-                                            isActive: isRootOutlineRowActive(group: group, disclosureKey: key)
-                                        )
-                                    )
-                                }
-                                .id(group.root.index)
-                            }
+                        ForEach(tree) { node in
+                            OutlineNodeRow(node: node, depth: 0, onSelectHeading: onSelectHeading)
                         }
                     }
                     .listStyle(.sidebar)
                     .tint(HiAppearance.brand)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .onChange(of: document.outlineSyncedHeadingIndex) { _ in
-                        scrollOutlineToSyncedSelection(
-                            proxy: scrollProxy,
-                            groups: HeadingParser.outlineGroups(document.headings)
-                        )
+                        autoExpandToActive()
+                        // outlineExpanded change triggers its own scrollToSynced;
+                        // call directly too in case expansion didn't change.
+                        scrollToSynced(proxy: scrollProxy)
                     }
                     .onChange(of: document.outlineExpanded) { _ in
-                        scrollOutlineToSyncedSelection(
-                            proxy: scrollProxy,
-                            groups: HeadingParser.outlineGroups(document.headings)
-                        )
+                        scrollToSynced(proxy: scrollProxy)
                     }
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onChange(of: document.fileURL) { _ in
-            Task { @MainActor in
-                expandBranchGroupsOnly()
-            }
+            Task { @MainActor in autoExpandToActive() }
         }
         .onAppear {
-            Task { @MainActor in
-                expandBranchGroupsOnly()
-            }
+            Task { @MainActor in autoExpandToActive() }
         }
     }
 
-    /// Which list row id `ScrollViewReader` should center on: child row when
-    /// expanded, otherwise the parent row (the only visible target when folded).
-    private func outlineScrollTargetID(synced: Int?, groups: [HeadingOutlineGroup]) -> Int? {
-        guard let synced else { return nil }
-        for g in groups {
-            if synced == g.root.index {
-                return g.root.index
-            }
-            if g.children.contains(where: { $0.index == synced }) {
-                let key = outlineKey(g.root)
-                let expanded = document.outlineExpanded.contains(key)
-                return expanded ? synced : g.root.index
+    /// Expand only the ancestors of the active heading (accordion: everything
+    /// else collapses). Sets outlineExpanded to exactly the ancestor key set.
+    private func autoExpandToActive() {
+        guard let synced = document.outlineSyncedHeadingIndex,
+              let keys = findAncestorKeys(of: synced, in: tree) else { return }
+        document.outlineExpanded = keys
+    }
+
+    /// Returns the set of node keys that are ancestors of `syncedIndex`,
+    /// or nil if `syncedIndex` is not found in `nodes`.
+    private func findAncestorKeys(of syncedIndex: Int, in nodes: [OutlineNode]) -> Set<String>? {
+        for node in nodes {
+            if node.entry.index == syncedIndex { return [] }
+            if let childKeys = findAncestorKeys(of: syncedIndex, in: node.children) {
+                var result = childKeys
+                result.insert("\(node.entry.index)")
+                return result
             }
         }
         return nil
     }
 
-    private func scrollOutlineToSyncedSelection(
-        proxy: ScrollViewProxy,
-        groups: [HeadingOutlineGroup]
-    ) {
-        guard let id = outlineScrollTargetID(synced: document.outlineSyncedHeadingIndex, groups: groups) else {
-            return
-        }
+    private func scrollToSynced(proxy: ScrollViewProxy) {
+        guard let id = scrollTarget(synced: document.outlineSyncedHeadingIndex, in: tree) else { return }
         DispatchQueue.main.async {
             withAnimation(.easeInOut(duration: 0.22)) {
                 proxy.scrollTo(id, anchor: .center)
@@ -151,42 +84,116 @@ struct OutlineSidebar: View {
         }
     }
 
-    private func outlineKey(_ h: HeadingEntry) -> String {
-        "\(h.index)"
+    private func scrollTarget(synced: Int?, in nodes: [OutlineNode]) -> Int? {
+        guard let synced else { return nil }
+        for node in nodes {
+            if let found = scrollTarget(synced: synced, in: node) { return found }
+        }
+        return nil
     }
 
-    /// Root row is active when the synced heading is the root itself, or when
-    /// the synced heading is a nested child but this disclosure is collapsed
-    /// (children are hidden, so the parent should show “you are here”).
-    private func isRootOutlineRowActive(group: HeadingOutlineGroup, disclosureKey: String) -> Bool {
+    private func scrollTarget(synced: Int, in node: OutlineNode) -> Int? {
+        if node.entry.index == synced { return synced }
+        let key = "\(node.entry.index)"
+        let expanded = document.outlineExpanded.contains(key)
+        if !expanded {
+            return containsIndex(synced, in: node) ? node.entry.index : nil
+        }
+        for child in node.children {
+            if let found = scrollTarget(synced: synced, in: child) { return found }
+        }
+        return nil
+    }
+
+    private func containsIndex(_ index: Int, in node: OutlineNode) -> Bool {
+        if node.entry.index == index { return true }
+        return node.children.contains { containsIndex(index, in: $0) }
+    }
+}
+
+private struct OutlineNodeRow: View {
+    let node: OutlineNode
+    let depth: Int
+    var onSelectHeading: (Int) -> Void
+
+    @EnvironmentObject private var document: DocumentModel
+
+    var body: some View {
+        if node.children.isEmpty {
+            leafButton
+        } else {
+            branchGroup
+        }
+    }
+
+    private var leafButton: some View {
+        Button {
+            onSelectHeading(node.entry.index)
+        } label: {
+            Text(node.entry.title.outlineDecodedBasicEntities)
+                .lineLimit(2)
+                .foregroundStyle(depth == 0 ? HiAppearance.brand : Color.primary)
+                .fontWeight(depth == 0 ? .semibold : .regular)
+        }
+        .buttonStyle(.plain)
+        .id(node.entry.index)
+        .listRowBackground(rowBackground)
+    }
+
+    private var branchGroup: some View {
+        let key = "\(node.entry.index)"
+        return DisclosureGroup(
+            isExpanded: Binding(
+                get: { document.outlineExpanded.contains(key) },
+                set: { expanded in
+                    DispatchQueue.main.async {
+                        if expanded { document.outlineExpanded.insert(key) }
+                        else { document.outlineExpanded.remove(key) }
+                    }
+                }
+            )
+        ) {
+            ForEach(node.children) { child in
+                OutlineNodeRow(node: child, depth: depth + 1, onSelectHeading: onSelectHeading)
+            }
+        } label: {
+            Button {
+                onSelectHeading(node.entry.index)
+            } label: {
+                Text(node.entry.title.outlineDecodedBasicEntities)
+                    .lineLimit(2)
+                    .foregroundStyle(depth == 0 ? HiAppearance.brand : Color.primary)
+                    .fontWeight(depth == 0 ? .semibold : .regular)
+            }
+            .buttonStyle(.plain)
+            .listRowBackground(rowBackground)
+        }
+        .id(node.entry.index)
+    }
+
+    // A node is active if it IS the synced heading or any ancestor of it —
+    // so both the parent section and the specific child are highlighted.
+    private var isActive: Bool {
         guard let synced = document.outlineSyncedHeadingIndex else { return false }
-        if synced == group.root.index { return true }
-        guard group.children.contains(where: { $0.index == synced }) else { return false }
-        let expanded = document.outlineExpanded.contains(disclosureKey)
-        return !expanded
+        return containsIndex(synced, in: node)
+    }
+
+    private func containsIndex(_ index: Int, in node: OutlineNode) -> Bool {
+        if node.entry.index == index { return true }
+        return node.children.contains { containsIndex(index, in: $0) }
     }
 
     @ViewBuilder
-    private func outlineRowBackground(isActive: Bool) -> some View {
+    private var rowBackground: some View {
         if isActive {
             HiAppearance.brand.opacity(0.18)
         } else {
             Color.clear
         }
     }
-
-    /// Only headings that actually have nested outline rows get a disclosure;
-    /// expand those by default on open so the tree matches the document.
-    private func expandBranchGroupsOnly() {
-        for g in HeadingParser.outlineGroups(document.headings) where !g.children.isEmpty {
-            document.outlineExpanded.insert(outlineKey(g.root))
-        }
-    }
 }
 
 private extension String {
-    /// TipTap / markdown may leave XML entities in heading text; decode the
-    /// common ones for readable outline labels.
     var outlineDecodedBasicEntities: String {
         self
             .replacingOccurrences(of: "&amp;", with: "&")

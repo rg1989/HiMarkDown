@@ -2,6 +2,7 @@ import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "@tiptap/markdown";
 import { HiCodeBlock } from "./mermaidCodeBlock";
+import { TableKit } from "@tiptap/extension-table";
 
 type NativePayload = { type?: string; payload?: unknown };
 
@@ -359,6 +360,7 @@ function initEditor() {
       StarterKit.configure({ history: false, codeBlock: false } as any),
       Markdown,
       HiCodeBlock,
+      TableKit,
     ],
     content: "",
     contentType: "markdown",

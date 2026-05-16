@@ -39,6 +39,14 @@ struct HeadingOutlineGroup: Hashable {
     let children: [HeadingEntry]
 }
 
+/// Recursive tree node for the outline sidebar (replaces the flat two-level
+/// `HeadingOutlineGroup` grouping with true nesting by heading level).
+struct OutlineNode: Identifiable {
+    let entry: HeadingEntry
+    var children: [OutlineNode]
+    var id: Int { entry.index }
+}
+
 enum HeadingParser {
     /// Decode common XML entities so Markdown source (`&amp;`) lines up with
     /// TipTap `textContent` and outline labels.
@@ -118,6 +126,23 @@ enum HeadingParser {
             index += 1
         }
         return result
+    }
+
+    /// Builds a recursive tree from a flat heading list based on heading level.
+    /// H2 items become children of the preceding H1, H3 items become children
+    /// of the preceding H2, etc. — matching the visual nesting of the document.
+    static func outlineTree(_ flat: [HeadingEntry]) -> [OutlineNode] {
+        guard !flat.isEmpty else { return [] }
+        var i = 0
+        func collect(parentLevel: Int) -> [OutlineNode] {
+            var nodes: [OutlineNode] = []
+            while i < flat.count, flat[i].level > parentLevel {
+                let entry = flat[i]; i += 1
+                nodes.append(OutlineNode(entry: entry, children: collect(parentLevel: entry.level)))
+            }
+            return nodes
+        }
+        return collect(parentLevel: 0)
     }
 
     /// Groups flat `HeadingEntry` list into outline sections: each root at

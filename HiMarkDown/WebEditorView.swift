@@ -92,9 +92,14 @@ final class WebEditorCoordinator: NSObject, ObservableObject, WKScriptMessageHan
         guard let webView, let document else { completion?(); return }
         suppressEchoUntil = Date().addingTimeInterval(Self.echoSuppressionWindow)
         document.noteMarkdownPushedToWeb()
-        let md = document.markdown.jsEscaped
-        webView.evaluateJavaScript("window.__HiMD?.setMarkdown(\"\(md)\")") { _, _ in
-            DispatchQueue.main.async { [weak self] in
+        let md = document.markdown
+        webView.callAsyncJavaScript(
+            "return window.__HiMD?.setMarkdown(md)",
+            arguments: ["md": md],
+            in: nil,
+            in: .page
+        ) { [weak self] _ in
+            DispatchQueue.main.async {
                 self?.syncTipTapMarkdownIntoDocumentThen(completion: completion)
             }
         }
