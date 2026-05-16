@@ -36,8 +36,9 @@ function buildDecos(doc: PMNode): DecorationSet {
     const code = node.textContent;
     if (!code.trim()) return;
     try {
-      const tree = lang && lowlight.hasLanguage(lang)
-        ? lowlight.highlight(lang, code)
+      const langKey = lang?.toLowerCase() ?? null;
+      const tree = langKey && lowlight.registered(langKey)
+        ? lowlight.highlight(langKey, code)
         : lowlight.highlightAuto(code);
       hastDecos(tree.children as any, pos + 1, 0, decos);
     } catch { /* skip */ }
