@@ -425,40 +425,181 @@ struct FindReplaceSheet: View {
 
     @State private var find = ""
     @State private var replace = ""
+    private enum FRField: Hashable { case find, replace }
+    @FocusState private var focused: FRField?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Find & Replace").font(.headline)
-            TextField("Find", text: $find)
-                .textFieldStyle(.roundedBorder)
-            TextField("Replace", text: $replace)
-                .textFieldStyle(.roundedBorder)
-            HStack {
-                Button("Find Next") {
-                    if isHTMLMode {
-                        onFindInWeb(find)
-                    } else {
-                        onFindInMarkdown(find)
+        VStack(spacing: 0) {
+            sheetHeader
+            VStack(alignment: .leading, spacing: 14) {
+                // Find field
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(HiAppearance.brand.opacity(0.7))
+                        .frame(width: 18)
+                    TextField("Find", text: $find)
+                        .textFieldStyle(.plain)
+                        .focused($focused, equals: .find)
+                    if !find.isEmpty {
+                        Button { find = "" } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 12))
+                                .foregroundStyle(.secondary.opacity(0.7))
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
-                .keyboardShortcut(.return, modifiers: [])
-                Button("Replace") {
-                    onReplaceFirst(find, replace)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 9)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(.regularMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .strokeBorder(HiAppearance.brand.opacity(0.28), lineWidth: 1)
+                        )
+                )
+
+                // Replace field
+                HStack(spacing: 8) {
+                    Image(systemName: "arrow.2.squarepath")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(HiAppearance.brand.opacity(0.7))
+                        .frame(width: 18)
+                    TextField("Replace with", text: $replace)
+                        .textFieldStyle(.plain)
+                        .focused($focused, equals: .replace)
+                    if !replace.isEmpty {
+                        Button { replace = "" } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 12))
+                                .foregroundStyle(.secondary.opacity(0.7))
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
-                Button("Replace All") {
-                    onReplaceAll(find, replace)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 9)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(.regularMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .strokeBorder(HiAppearance.brand.opacity(0.18), lineWidth: 1)
+                        )
+                )
+
+                // Action buttons
+                HStack(spacing: 8) {
+                    Button {
+                        if isHTMLMode { onFindInWeb(find) } else { onFindInMarkdown(find) }
+                    } label: {
+                        Label("Find Next", systemImage: "chevron.down")
+                            .font(.system(size: 13, weight: .semibold))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 7)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(HiAppearance.brand)
+                    .disabled(find.isEmpty)
+                    .keyboardShortcut(.return, modifiers: [])
+
+                    Button("Replace") { onReplaceFirst(find, replace) }
+                        .buttonStyle(.bordered)
+                        .tint(HiAppearance.brand)
+                        .disabled(find.isEmpty)
+
+                    Button("Replace All") { onReplaceAll(find, replace) }
+                        .buttonStyle(.bordered)
+                        .tint(HiAppearance.brand)
+                        .disabled(find.isEmpty)
                 }
-                Spacer()
-                Button("Close") { isPresented = false }
-                    .keyboardShortcut(.cancelAction)
+
+                if isHTMLMode {
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 11))
+                            .foregroundStyle(HiAppearance.brand.opacity(0.6))
+                            .padding(.top, 1)
+                        Text("In HTML mode, Find Next highlights matches in the visible page.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(HiAppearance.brand.opacity(0.06))
+                    )
+                }
             }
-            if isHTMLMode {
-                Text("Tip: native Find also works in HTML mode (⌘F triggers this panel; use Edit menu Find for web find where available).")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            .padding(20)
+        }
+        .frame(minWidth: 460)
+        .background(
+            ZStack {
+                Rectangle().fill(.regularMaterial)
+                LinearGradient(
+                    colors: [
+                        HiAppearance.brand.opacity(0.09),
+                        HiAppearance.brandSecondary.opacity(0.04),
+                        Color.clear
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
+            .ignoresSafeArea()
+        )
+        .tint(HiAppearance.brand)
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                focused = .find
             }
         }
-        .padding()
-        .frame(minWidth: 420)
+    }
+
+    private var sheetHeader: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass.circle.fill")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(HiAppearance.brand)
+            Text("Find & Replace")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [HiAppearance.brand, HiAppearance.brandSecondary],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+            Spacer()
+            Button {
+                isPresented = false
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(.secondary)
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(.cancelAction)
+            .help("Close")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            ZStack {
+                Rectangle().fill(.regularMaterial)
+                LinearGradient(
+                    colors: [HiAppearance.brand.opacity(0.14), HiAppearance.brand.opacity(0.04), Color.clear],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            }
+        )
+        .overlay(HiAppearance.toolbarAccentLine(), alignment: .bottom)
     }
 }

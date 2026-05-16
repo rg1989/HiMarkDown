@@ -5,26 +5,56 @@ struct OutlineSidebar: View {
 
     var onSelectHeading: (Int) -> Void
 
+    @State private var searchText = ""
+    @State private var showSearch = false
+    @FocusState private var searchFocused: Bool
+
     private var tree: [OutlineNode] {
         HeadingParser.outlineTree(document.headings)
+    }
+
+    private var filteredHeadings: [HeadingEntry] {
+        guard !searchText.trimmingCharacters(in: .whitespaces).isEmpty else { return [] }
+        return document.headings.filter {
+            $0.title.outlineDecodedBasicEntities
+                .localizedCaseInsensitiveContains(searchText)
+        }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             outlineHeader
             gradientDivider
-            if tree.isEmpty {
+            if showSearch {
+                searchBar
+                Rectangle()
+                    .fill(HiAppearance.brand.opacity(0.12))
+                    .frame(height: 1)
+            }
+            if showSearch && !searchText.trimmingCharacters(in: .whitespaces).isEmpty {
+                searchResultsView
+            } else if tree.isEmpty {
                 emptyState
             } else {
                 outlineScrollView
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .animation(.easeInOut(duration: 0.18), value: showSearch)
         .onChange(of: document.fileURL) { _ in
             Task { @MainActor in autoExpandToActive() }
         }
         .onAppear {
             Task { @MainActor in autoExpandToActive() }
+        }
+        .onChange(of: showSearch) { isShowing in
+            if isShowing {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                    searchFocused = true
+                }
+            } else {
+                searchText = ""
+            }
         }
     }
 
@@ -43,6 +73,19 @@ struct OutlineSidebar: View {
                     )
                 )
             Spacer()
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    showSearch.toggle()
+                }
+            } label: {
+                Image(systemName: showSearch ? "xmark.circle.fill" : "magnifyingglass")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(showSearch ? AnyShapeStyle(Color.secondary) : AnyShapeStyle(HiAppearance.brand.opacity(0.65)))
+                    .frame(width: 18, height: 18)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help(showSearch ? "Close search" : "Search headings")
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
@@ -55,6 +98,66 @@ struct OutlineSidebar: View {
             endPoint: .trailing
         )
         .frame(height: 1)
+    }
+
+    private var searchBar: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(HiAppearance.brand.opacity(0.6))
+            TextField("Search headings…", text: $searchText)
+                .textFieldStyle(.plain)
+                .font(.system(size: 12))
+                .focused($searchFocused)
+            if !searchText.isEmpty {
+                Button { searchText = "" } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary.opacity(0.8))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 7)
+                .fill(HiAppearance.brand.opacity(0.07))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 7)
+                        .strokeBorder(HiAppearance.brand.opacity(0.2), lineWidth: 0.75)
+                )
+        )
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+    }
+
+    private var searchResultsView: some View {
+        let results = filteredHeadings
+        return ScrollView(.vertical, showsIndicators: false) {
+            if results.isEmpty {
+                VStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 22, weight: .thin))
+                        .foregroundStyle(HiAppearance.brand.opacity(0.3))
+                    Text("No matches")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, 36)
+            } else {
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(results) { heading in
+                        SearchResultRow(heading: heading, onSelect: {
+                            onSelectHeading(heading.index)
+                        })
+                    }
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 5)
+            }
+        }
     }
 
     private var emptyState: some View {
@@ -292,6 +395,53 @@ private struct OutlineNodeRow: View {
     private func containsIndex(_ index: Int, in node: OutlineNode) -> Bool {
         if node.entry.index == index { return true }
         return node.children.contains { containsIndex(index, in: $0) }
+    }
+}
+
+private struct SearchResultRow: View {
+    let heading: HeadingEntry
+    var onSelect: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: onSelect) {
+            HStack(spacing: 8) {
+                Text("H\(heading.level)")
+                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(levelColor))
+                Text(heading.title.outlineDecodedBasicEntities)
+                    .font(.system(size: 12, weight: heading.level == 1 ? .semibold : .regular))
+                    .foregroundStyle(Color.primary.opacity(heading.level == 1 ? 1.0 : 0.8))
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.vertical, 5)
+            .padding(.horizontal, 8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .background {
+            if isHovered {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(HiAppearance.brand.opacity(0.07))
+            }
+        }
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.12)) { isHovered = hovering }
+        }
+    }
+
+    private var levelColor: Color {
+        switch heading.level {
+        case 1: return HiAppearance.brand
+        case 2: return HiAppearance.brand.opacity(0.7)
+        case 3: return HiAppearance.brandSecondary.opacity(0.8)
+        default: return Color.secondary.opacity(0.55)
+        }
     }
 }
 
