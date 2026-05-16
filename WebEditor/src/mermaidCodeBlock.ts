@@ -1,5 +1,6 @@
 import { mergeAttributes, NodeViewRendererProps } from "@tiptap/core";
 import CodeBlock from "@tiptap/extension-code-block";
+import { createSyntaxHighlightPlugin } from "./syntaxHighlight";
 import { TextSelection } from "@tiptap/pm/state";
 import type { Node as PMNode } from "@tiptap/pm/model";
 import type { Decoration, DecorationSource, ViewMutationRecord } from "@tiptap/pm/view";
@@ -369,5 +370,8 @@ export const HiCodeBlock = CodeBlock.extend({
   },
   addNodeView() {
     return (props: NodeViewRendererProps) => createMermaidNodeView(props);
+  },
+  addProseMirrorPlugins() {
+    return [createSyntaxHighlightPlugin()];
   },
 });
